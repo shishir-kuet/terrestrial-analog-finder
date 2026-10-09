@@ -20,6 +20,12 @@
   search still sends exactly the six terrain features, so the ranking in this report is unchanged.
 - Separate resumable build (`python -m pipeline.build_env`) writing `data/processed/environment.json`, merged onto the terrain
   records at load time. Coverage is reported per feature by `/api/environment` and shown next to the feature's weight slider.
+- The build has now been **run to completion over all 570 locations** (12 targets and 558 Earth windows); every record returned
+  `status: "ok"`, and the measured coverage is: 247 of the 469 rankable Earth windows carry `thermal_inertia_percentile` and 338
+  carry EMIT mineral classes; of the 12 targets, the 4 Mars windows carry the thermal feature and the 8 Moon windows report it
+  missing with the stated reason. Four windows failed on truncated granule downloads during the first pass and were re-measured
+  successfully; two Sahara windows have no thermal value because too few ECOSTRESS scenes fell inside the required local-solar-time
+  windows, which is recorded as a missing reason rather than filled in.
 - Searched and **not** found in the archives reachable here: a lunar thermal-inertia product, and any archived global planetary
   mineral-class map. Both gaps are recorded as explicit missing reasons rather than substituted, so Moon targets report the
   thermal feature missing and EMIT mineral classes are displayed but never scored.
@@ -74,7 +80,9 @@ None are required. Optional ones are listed in `.env.example`.
 - The official challenge page and rules were **not verified** (blocked from the build environment).
 - Named Earth site coordinates are approximate and unverified.
 - Thermal and mineral coverage is partial: ECOSTRESS reaches only about ±52° latitude, EMIT flies over selected arid regions, and
-  cloud screening removes scenes. The exact counts are in `/api/environment`.
+  cloud screening removes scenes. Measured over the completed build, 247 of the 469 rankable Earth windows have the thermal
+  feature and 338 have mineral classes; the live counts are in `/api/environment`. Weighting the thermal feature therefore ranks
+  roughly half the pool and excludes the rest, which the Explorer states next to the slider.
 - The cross-body thermal comparison is ordinal (within-body percentiles of two different quantities, uncalibrated against each
   other), the Earth percentile reference is this app's pool rather than Earth as a whole, and no lunar thermal inertia exists in
   the reachable archives, so Moon targets cannot use the feature.
