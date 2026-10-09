@@ -79,7 +79,13 @@ def compute_scales(pool: list[dict]) -> dict[str, float]:
     for key, f in FEATURES.items():
         src = SCALE_SOURCE.get(key, key)
         vals = [transform(src, r["features"].get(src)) for r in pool]
-        scales[key] = robust_scale([v for v in vals if v is not None])
+        try:
+            scales[key] = robust_scale([v for v in vals if v is not None])
+        except SimilarityError:
+            # A feature the current data build does not measure for enough
+            # Earth windows has no scale. It stays in the registry (so the UI
+            # can explain it) and is refused by the engine with a reason.
+            scales[key] = None
     return scales
 
 
@@ -192,6 +198,11 @@ def rank(target: dict, candidates: list[dict], weights: dict[str, float], scales
     w = validate_weights(weights)
     warnings = []
     for key in list(w):
+        if scales.get(key) is None:
+            warnings.append(f"Feature '{key}' is not measured for enough Earth windows in this data build "
+                            "to be scaled, and was dropped.")
+            del w[key]
+            continue
         if not target_usable(key, target):
             warnings.append(f"Feature '{key}' is unavailable for the target and was dropped: "
                             f"{target.get('missing_reasons', {}).get(key, 'no value')}")

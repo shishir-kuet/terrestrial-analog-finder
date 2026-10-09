@@ -30,6 +30,27 @@ export interface LocationSummary {
   hillshade: string | null;
   region?: string | null;
   analog_context?: string | null;
+  environment?: LocationEnvironment | null;
+}
+
+/** Thermal and mineral measurements attached by the environmental data build. */
+export interface LocationEnvironment {
+  status: string | null;
+  error?: string | null;
+  attributes: Record<string, number | string | Record<string, number> | null>;
+  provenance: Record<string, unknown>;
+}
+
+export interface EnvironmentInfo {
+  built_at: string | null;
+  parameters: Record<string, unknown>;
+  percentile_reference: Record<string, unknown> | null;
+  counts: Record<string, Record<string, number>>;
+  earth_windows_ok: number;
+  earth_windows_with_thermal_feature: number;
+  earth_windows_with_mineral_classes: number;
+  comparable_features: string[];
+  display_only: string;
 }
 
 export interface SourceItem {
@@ -110,6 +131,7 @@ export interface SearchResponse {
     min_coverage: number;
     missing_penalty: number;
     reference_pool_size: number;
+    candidate_coverage?: Record<string, number>;
     data_built_at: string;
   };
   results: Candidate[];

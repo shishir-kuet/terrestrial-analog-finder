@@ -74,7 +74,7 @@ def _resampling_for(src_res_m: float) -> Resampling:
     return Resampling.average if src_res_m < 0.75 * GRID_RES_M else Resampling.bilinear
 
 
-def _warp_into(src, dst: np.ndarray, dst_crs: CRS, src_res_m: float, mask_src=None) -> None:
+def _warp_into(src, dst: np.ndarray, dst_crs: CRS, src_res_m: float, mask_src=None, resampling=None) -> None:
     """Warp the part of ``src`` covering the destination grid into ``dst``,
     only filling cells that are still NaN. ``mask_src`` (same grid as
     ``src``) marks cells to discard where its value is > 0."""
@@ -104,10 +104,64 @@ def _warp_into(src, dst: np.ndarray, dst_crs: CRS, src_res_m: float, mask_src=No
         dst_transform=dst_transform,
         dst_crs=dst_crs,
         dst_nodata=np.nan,
-        resampling=_resampling_for(src_res_m),
+        resampling=resampling or _resampling_for(src_res_m),
     )
     fill = np.isnan(dst) & np.isfinite(tmp)
     dst[fill] = tmp[fill]
+
+
+def warp_array(
+    data: np.ndarray,
+    src_transform,
+    src_crs,
+    dst_crs: CRS,
+    src_res_m: float,
+    resampling: Resampling | None = None,
+) -> np.ndarray:
+    """Warp an in-memory array onto the standard destination window grid.
+
+    Missing cells are NaN in and out. Used by the environmental readers
+    (ECOSTRESS, VIIRS, TES, EMIT), whose sources are not elevation and are
+    therefore resampled with the rule appropriate to the quantity: continuous
+    fields pass ``None`` (the elevation rule: average when the source is finer
+    than the grid, bilinear otherwise) and categorical fields pass
+    ``Resampling.nearest``.
+    """
+    dst_transform, shape = _dst_grid()
+    out = np.full(shape, np.nan, dtype="float32")
+    reproject(
+        data.astype("float32"),
+        out,
+        src_transform=src_transform,
+        src_crs=src_crs,
+        src_nodata=np.nan,
+        dst_transform=dst_transform,
+        dst_crs=dst_crs,
+        dst_nodata=np.nan,
+        resampling=resampling or _resampling_for(src_res_m),
+    )
+    return out
+
+
+def read_window(path: str, dst_crs: CRS, src_res_m: float, resampling: Resampling | None = None) -> np.ndarray:
+    """Read one raster (local path or remote URL) onto the window grid.
+
+    Remote URLs are read with GDAL range requests, so only the tiles covering
+    the window are transferred. Cells the source does not cover stay NaN.
+    """
+    uri = path if path.startswith(("/vsi", "/")) or Path(path).exists() else f"/vsicurl/{path}"
+    out = np.full((N_PX, N_PX), np.nan, dtype="float32")
+    with rasterio.open(uri) as src:
+        _warp_into(src, out, dst_crs, src_res_m, resampling=resampling)
+    return out
+
+
+def window_bbox_latlon(body: str, lat: float, lon: float, pad_m: float = 0.0) -> tuple[float, float, float, float]:
+    """(west, south, east, north) in degrees covering the window, plus padding."""
+    dst_crs = local_crs(body, lat, lon)
+    half = WINDOW_SIZE_M / 2 + pad_m
+    w, s, e, n = transform_bounds(dst_crs, "EPSG:4326", -half, -half, half, half, densify_pts=41)
+    return float(w), float(s), float(e), float(n)
 
 
 @lru_cache(maxsize=1)

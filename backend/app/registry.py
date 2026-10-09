@@ -111,7 +111,34 @@ FEATURES: dict[str, FeatureDef] = {
             "sum over bins of |CDF_candidate - CDF_target| x 1 degree. Scaled by the same IQR as median slope.",
             "Treats the window as a bag of slopes (ignores spatial arrangement).",
         ),
+        FeatureDef(
+            "thermal_inertia_percentile",
+            "Thermal inertia percentile (within body)",
+            "percentile (0-100)",
+            "scalar",
+            "identity",
+            0.0,
+            0.0,
+            "How this window's thermophysical character ranks against its own body: low values are "
+            "dust- or fines-dominated surfaces that lose heat quickly, high values are rock, duricrust "
+            "or exposed bedrock.",
+            "Earth: apparent thermal inertia ATI = (1 - albedo) / (T_day - T_night) from ECOSTRESS "
+            "ECO_L2T_LSTE v002 land-surface temperature medians and VNP43MA3 shortwave albedo, "
+            "expressed as a percentile of the Earth windows in this build. Mars: median MGS TES "
+            "nightside thermal inertia (tiu) over the window, expressed as a percentile of the whole "
+            "global TES map. Moon: not available (reported missing with the reason).",
+            "Earth ATI and Mars thermal inertia are different quantities in different units; only their "
+            "within-body ranks are compared, which assumes the two distributions correspond - they are "
+            "not calibrated against each other. The Earth percentile is relative to this app's "
+            "deliberately arid/volcanic/polar pool, not to Earth as a whole. The TES map is ~3 km per "
+            "pixel, so a 12 km window holds only about 16 source pixels. Default weight is 0, so this "
+            "feature changes nothing until it is switched on.",
+        ),
     ]
 }
 
 SCALE_SOURCE = {"slope_distribution": "slope_median_deg"}
+
+# Features whose measurements come from the environmental build
+# (``data/processed/environment.json``) rather than the terrain build.
+ENVIRONMENTAL_FEATURES = ("thermal_inertia_percentile",)

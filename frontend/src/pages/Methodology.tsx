@@ -6,6 +6,7 @@ export default function Methodology() {
   const m = useAsync(() => api.methodology(), []);
   const d = useAsync(() => api.datasets(), []);
   const f = useAsync(() => api.features(), []);
+  const e = useAsync(() => api.environment(), []);
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4">
@@ -88,6 +89,34 @@ ${m.data.similarity_index}`}</pre>
         </table>
       </section>
 
+      <section className="card space-y-2 text-sm">
+        <SectionTitle sub="Built separately from the terrain layer and merged onto each location, because coverage is uneven by nature.">
+          Thermal and mineral layer
+        </SectionTitle>
+        {e.loading && <Loading />}
+        {e.error && <ErrorBox message={e.error} onRetry={e.reload} />}
+        {e.data && (
+          <>
+            <p>
+              Measured for <b>{e.data.earth_windows_with_thermal_feature}</b> of {e.data.earth_windows_ok} complete Earth
+              windows (thermal) and <b>{e.data.earth_windows_with_mineral_classes}</b> (mineral classes); built{' '}
+              {e.data.built_at ?? 'not yet'}.
+            </p>
+            <p>
+              <span className="text-slate-400">Comparable across bodies:</span> {e.data.comparable_features.join(', ') || 'none'}.
+              Its default weight is 0, so the terrain-only ranking is unchanged unless you switch it on.
+            </p>
+            <p className="text-slate-400">{e.data.display_only}</p>
+            <details className="rounded-lg border border-slate-800 p-2">
+              <summary className="cursor-pointer text-xs text-slate-300">Build parameters and percentile references</summary>
+              <pre className="mt-2 overflow-x-auto rounded bg-slate-950 p-2 font-mono text-[11px] text-slate-300">
+                {JSON.stringify({ parameters: e.data.parameters, percentile_reference: e.data.percentile_reference }, null, 1)}
+              </pre>
+            </details>
+          </>
+        )}
+      </section>
+
       {m.data?.sensitivity && (
         <section className="card text-sm">
           <SectionTitle sub={m.data.sensitivity.description}>Sensitivity analysis</SectionTitle>
@@ -105,7 +134,9 @@ ${m.data.similarity_index}`}</pre>
       <section className="card text-sm">
         <SectionTitle>Scientific limitations</SectionTitle>
         <ul className="list-disc space-y-1 pl-5 text-slate-300">
-          <li>Only terrain geometry is compared. Composition, temperature, atmosphere, gravity, radiation, illumination and regolith properties are not represented.</li>
+          <li>The default ranking compares terrain geometry only. Thermophysical character enters only through the thermal-inertia percentile, which is off by default; atmosphere, gravity, radiation, illumination and regolith depth are never represented.</li>
+          <li>The thermal-inertia percentile compares ranks, not physical values: Earth's apparent thermal inertia (K⁻¹, from ECOSTRESS and VIIRS) and Mars' TES thermal inertia (tiu) are different quantities, and matching their within-body percentiles assumes the two distributions correspond. Earth percentiles are relative to this app's arid/volcanic/polar pool, not to Earth as a whole, and the Moon has no thermal-inertia product in the archives reachable here.</li>
+          <li>EMIT mineral identifications are per-pixel spectral-library matches grouped into classes by this project, available only where EMIT has flown; they have no planetary counterpart in this build, so they are shown but never scored.</li>
           <li>All features are scale-dependent; results apply to 12 km windows on a 30 m grid only.</li>
           <li>Earth heights come from a surface model (vegetation, buildings, ice surfaces included); lunar and Martian DTMs are bare-surface products with their own interpolation and stereo noise. Short-baseline roughness is the most affected feature.</li>
           <li>Planetary targets are limited to products in the USGS analysis-ready archive: 8 lunar south-polar sites and 4 Martian CTX DTM windows.</li>

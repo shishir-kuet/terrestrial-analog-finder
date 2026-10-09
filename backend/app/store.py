@@ -7,6 +7,7 @@ import os
 from functools import cached_property
 from pathlib import Path
 
+from app.registry import ENVIRONMENTAL_FEATURES
 from app.similarity import compute_scales
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
@@ -28,12 +29,42 @@ class Store:
         return json.loads(path.read_text())
 
     @cached_property
+    def environment(self) -> dict:
+        """The environmental build, or an empty one when it has not been run.
+
+        Keeping it separate means the terrain-only ranking is identical with or
+        without this layer, and a partial environmental build is usable.
+        """
+        p = self.processed / "environment.json"
+        return json.loads(p.read_text()) if p.exists() else {"locations": {}, "parameters": {}, "counts": {}}
+
+    @cached_property
     def locations(self) -> dict[str, dict]:
         recs = self._read(self.processed / "locations.json")["locations"]
+        env = self.environment.get("locations", {})
         out = {}
         for r in recs:
             if not (-90 <= r["lat"] <= 90 and -180 <= r["lon"] <= 180):
                 raise DataUnavailable(f"invalid coordinates for {r['id']}")
+            e = env.get(r["id"])
+            if e:
+                for key in ENVIRONMENTAL_FEATURES:
+                    r["features"][key] = e["values"].get(key)
+                    if e["values"].get(key) is None:
+                        r.setdefault("missing_reasons", {})[key] = e["missing_reasons"].get(
+                            key, "not measured in this data build")
+                r["environment"] = {
+                    "status": e.get("status"),
+                    "error": e.get("error"),
+                    "attributes": e.get("attributes", {}),
+                    "provenance": e.get("provenance", {}),
+                }
+            else:
+                for key in ENVIRONMENTAL_FEATURES:
+                    r["features"][key] = None
+                    r.setdefault("missing_reasons", {})[key] = (
+                        "this location was not covered by the environmental data build")
+                r["environment"] = None
             out[r["id"]] = r
         return out
 

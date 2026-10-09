@@ -124,10 +124,50 @@ def test_methodology_and_datasets(client):
     assert "not a probability" in m["interpretation"]
     assert m["window"]["grid_res_m"] == 30.0
     ds = client.get("/api/datasets").json()
-    assert len(ds["integrated"]) == 3 and ds["investigated_not_integrated"]
+    # 3 terrain products (LOLA, CTX, Copernicus) + 5 thermal/mineral ones
+    assert len(ds["integrated"]) == 8 and ds["investigated_not_integrated"]
+    assert {d["id"] for d in ds["integrated"]} >= {
+        "ecostress-l2t-lste-v002", "viirs-vnp43ma3-v002", "emit-l2b-min-v002",
+        "mgs-tes-thermal-inertia-night", "lro-diviner-prp-south"}
+    assert all(d["authentication"] for d in ds["integrated"])
+    assert "environmental_layer" in m
 
 
 def test_hillshade(client):
     r = client.get("/api/hillshade/moon-shackleton-rim.png")
     assert r.status_code == 200 and r.headers["content-type"] == "image/png"
     assert client.get("/api/hillshade/unknown.png").status_code == 404
+
+
+def test_environment_endpoint_reports_coverage_and_scope(client):
+    e = client.get("/api/environment").json()
+    assert e["comparable_features"] == ["thermal_inertia_percentile"]
+    assert e["earth_windows_with_thermal_feature"] <= e["earth_windows_ok"]
+    assert "never used in scoring" in e["display_only"]
+
+
+def test_thermal_feature_is_declared_but_carries_no_default_weight(client):
+    defs = {f["key"]: f for f in client.get("/api/features").json()["features"]}
+    f = defs["thermal_inertia_percentile"]
+    assert f["default_weight"] == 0.0
+    assert "Moon: not available" in f["method"]
+    assert "not calibrated against each other" in f["limitations"]
+
+
+def test_default_search_is_unchanged_by_the_environmental_layer(client):
+    """The documented terrain-only ranking must still be what a default search
+    returns: the thermal feature is only used when asked for."""
+    r = search(client, limit=10).json()
+    assert "thermal_inertia_percentile" not in r["config"]["weights"]
+    assert all("thermal_inertia_percentile" not in c["missing_features"] for c in r["results"])
+
+
+def test_search_reports_candidate_coverage_per_feature(client):
+    r = search(client, weights={"slope_median_deg": 1}, limit=5).json()
+    cov = r["config"]["candidate_coverage"]
+    assert cov["slope_median_deg"] > 0
+
+
+def test_location_features_include_the_environmental_block(client):
+    r = client.get("/api/locations/mars-jezero/features").json()
+    assert "environment" in r and "thermal_inertia_percentile" in r["environment_note"]

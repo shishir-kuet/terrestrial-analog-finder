@@ -2,6 +2,7 @@ import type { Candidate, FeatureDef, SearchResponse, Target } from '../lib/types
 
 export const featureDefs: FeatureDef[] = [
   { key: 'slope_median_deg', label: 'Median slope', unit: 'degrees', kind: 'scalar', transform: 'identity', log_offset: 0, default_weight: 1, meaning: 'm', method: 'm', limitations: 'l' },
+  { key: 'thermal_inertia_percentile', label: 'Thermal inertia percentile (within body)', unit: 'percentile (0-100)', kind: 'scalar', transform: 'identity', log_offset: 0, default_weight: 0, meaning: 'm', method: 'm', limitations: 'l' },
   { key: 'hypsometric_integral', label: 'Hypsometric integral', unit: 'dimensionless (0-1)', kind: 'scalar', transform: 'identity', log_offset: 0, default_weight: 0.5, meaning: 'm', method: 'm', limitations: 'l' },
 ];
 
