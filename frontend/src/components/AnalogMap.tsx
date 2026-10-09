@@ -62,7 +62,7 @@ function FlyToSelected({ pos }: { pos: [number, number] | null }) {
 
 export function Legend({ hasResults }: { hasResults: boolean }) {
   return (
-    <div className="pointer-events-auto absolute bottom-3 left-3 z-[1000] w-56 rounded-lg border border-slate-700 bg-slate-900/90 p-2.5 text-xs text-slate-300 shadow-lg" aria-label="Map legend">
+    <div className="pointer-events-auto absolute bottom-3 left-3 z-[1000] w-44 sm:w-56 rounded-lg border border-slate-700 bg-slate-900/90 p-2.5 text-xs text-slate-300 shadow-lg" aria-label="Map legend">
       <p className="mb-1 font-semibold text-slate-100">Legend</p>
       {hasResults ? (
         <>
@@ -76,12 +76,12 @@ export function Legend({ hasResults }: { hasResults: boolean }) {
       ) : (
         <p className="text-slate-400">Run a search to colour candidates by similarity.</p>
       )}
-      <div className="mt-1.5 space-y-0.5">
+      <div className="mt-1.5 hidden space-y-0.5 sm:block">
         <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-white align-middle" /> named analog site (larger)</p>
         <p><span className="mr-1 inline-block h-2 w-2 rounded-full bg-slate-400 align-middle" /> survey grid cell</p>
         <p><span className="mr-1 inline-block h-2 w-2 rounded-full border border-rose-400 align-middle" /> not ranked (missing data)</p>
       </div>
-      <p className="mt-1.5 text-[10px] text-slate-500">Markers mark the centre of a 12 km × 12 km analysis window.</p>
+      <p className="mt-1.5 hidden text-[10px] text-slate-500 sm:block">Markers mark the centre of a 12 km × 12 km analysis window.</p>
     </div>
   );
 }
