@@ -1,5 +1,6 @@
 import type {
   DatasetCatalog,
+  EnvironmentInfo,
   FeatureDef,
   LocationDetail,
   LocationSummary,
@@ -53,6 +54,7 @@ export const api = {
   regions: () => request<{ regions: SurveyRegion[] }>('/api/regions').then((r) => r.regions),
   location: (id: string) => request<LocationDetail>(`/api/locations/${encodeURIComponent(id)}`),
   datasets: () => request<DatasetCatalog>('/api/datasets'),
+  environment: () => request<EnvironmentInfo>('/api/environment'),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   methodology: () => request<Record<string, any>>('/api/methodology'),
   search: (req: SearchRequest) =>

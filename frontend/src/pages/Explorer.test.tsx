@@ -11,7 +11,7 @@ vi.mock('../components/AnalogMap', () => ({
 }));
 
 const api = vi.hoisted(() => ({
-  features: vi.fn(), targets: vi.fn(), earth: vi.fn(), regions: vi.fn(), datasets: vi.fn(), search: vi.fn(), location: vi.fn(),
+  features: vi.fn(), targets: vi.fn(), earth: vi.fn(), regions: vi.fn(), datasets: vi.fn(), search: vi.fn(), location: vi.fn(), environment: vi.fn(),
 }));
 vi.mock('../lib/api', async (orig) => ({ ...(await orig<typeof import('../lib/api')>()), api }));
 
@@ -27,11 +27,16 @@ function setup() {
 
 beforeEach(() => {
   Object.values(api).forEach((f) => f.mockReset());
-  api.features.mockResolvedValue({ features: featureDefs, scales: { slope_median_deg: 2, hypsometric_integral: 0.1 } });
+  api.features.mockResolvedValue({ features: featureDefs, scales: { slope_median_deg: 2, hypsometric_integral: 0.1, thermal_inertia_percentile: 50 } });
   api.targets.mockResolvedValue([target]);
   api.earth.mockResolvedValue([]);
   api.regions.mockResolvedValue([]);
   api.datasets.mockResolvedValue({ integrated: [], investigated_not_integrated: [] });
+  api.environment.mockResolvedValue({
+    built_at: 'now', parameters: {}, percentile_reference: null, counts: {},
+    earth_windows_ok: 400, earth_windows_with_thermal_feature: 120, earth_windows_with_mineral_classes: 60,
+    comparable_features: ['thermal_inertia_percentile'], display_only: 'context only',
+  });
   api.location.mockResolvedValue({ ...target, id: 'a', slope_hist: null, rel_elev_quantiles: null, coordinate_source: 'grid', absolute_elevation_median_m: 100 });
 });
 
@@ -110,5 +115,21 @@ describe('Explorer', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Find Earth analogs' }));
     expect(await screen.findByText(/unavailable \(undefined for near-flat terrain\)/)).toBeInTheDocument();
     expect(screen.getByText(/Missing measurements: Hypsometric integral/)).toBeInTheDocument();
+  });
+
+  it('starts the partially measured thermal feature switched off and says how far it reaches', async () => {
+    setup();
+    const label = await screen.findByText(/Thermal inertia percentile/);
+    const row = label.closest('div')!.parentElement!;
+    expect(within(row).getByRole('checkbox')).not.toBeChecked();
+    expect(await screen.findByText(/Measured for 120 of 400 Earth windows/)).toBeInTheDocument();
+  });
+
+  it('does not send a zero-weight feature with the default search', async () => {
+    api.search.mockResolvedValue(response([candidate('a', 1, 90)]));
+    setup();
+    await userEvent.click(await screen.findByRole('button', { name: /find earth analogs/i }));
+    await waitFor(() => expect(api.search).toHaveBeenCalled());
+    expect(api.search.mock.calls[0][0].weights).not.toHaveProperty('thermal_inertia_percentile');
   });
 });

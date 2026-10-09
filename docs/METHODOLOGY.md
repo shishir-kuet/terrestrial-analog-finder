@@ -100,3 +100,73 @@ the 12 km / 30 m scale". Under the 90 m perturbation, Meridiani loses its full-c
 No ML model is used. There are no labelled "good analog" pairs to train or evaluate against, and inventing labels is out of scope.
 The transparent baseline is kept. Unsupervised exploration (clustering or PCA of the Earth pool) is a possible next step and
 would be descriptive only.
+
+## 9. Thermal and mineral layer
+
+Added 2026-10-09. It is built by a **separate** command (`python -m pipeline.build_env`) into
+`data/processed/environment.json` and merged onto the terrain records when the API loads them. The terrain-only ranking in
+sections 1–8 is therefore unchanged and still reproducible: the one comparable feature this layer adds carries a **default weight
+of 0**, and the default search sends exactly the six terrain features.
+
+### 9.1 What is measured
+
+| Body | Product | Quantity reduced to the 12 km window |
+|---|---|---|
+| Earth | ECOSTRESS `ECO_L2T_LSTE` v002 | per-pixel median day and night land-surface temperature (K), from 3–4 scenes per side inside fixed local-solar-time windows, cloud- and water-masked |
+| Earth | VIIRS `VNP43MA3` v002 | median white-sky shortwave albedo (quality flag 0 only) |
+| Earth | derived | apparent thermal inertia **ATI = (1 − albedo) / (T_day − T_night)**, in K⁻¹ |
+| Earth | EMIT `EMITL2BMIN` v002 | area fraction of each mineral class, for both EMIT mineral groups, plus swath and identification coverage |
+| Mars | MGS TES `MGS-M-TES-5-TIMAP-V1.0` | median nightside thermal inertia (tiu) and the interpolated-area fraction |
+| Moon | LRO Diviner `LRO-L-DLRE-5-PRP-V2.0` | median modelled annual average (2 cm depth) and maximum (surface) temperature, modelled ice-stability depth and the stable-area fraction |
+
+Units, resolutions, licences, authentication and per-product limitations are in [DATA_SOURCES.md](DATA_SOURCES.md) records 4–8.
+
+### 9.2 The one comparable feature: `thermal_inertia_percentile`
+
+Earth's ATI (K⁻¹) and Mars' thermal inertia (tiu) are **different quantities in different units**, so their values are not
+compared. What is compared is each window's rank inside its own body:
+
+```
+Earth: percentile of this window's ATI among the Earth windows measured in this build
+Mars:  percentile of this window's median TES thermal inertia among all valid pixels of the global nightside map
+Moon:  not available
+```
+
+Both quantities increase with thermal inertia (a dusty, fine-grained surface heats and cools fast: large ΔT, low ATI; rock and
+duricrust do the opposite), so the ranks are monotone in the same physical property. The percentile curves used are stored in
+`environment.json` and served at `/api/environment`, so a number can be traced back to the distribution it came from.
+
+What this supports: "this Earth window sits as high in Earth's thermophysical range as Jezero does in Mars'". What it does **not**
+support: any claim that the two surfaces have equal thermal inertia, equal grain size or equal rock abundance. Specifically:
+
+- the two distributions are **not calibrated against each other**; matching percentiles assumes they correspond, which is an
+  assumption, not a measurement;
+- the Earth distribution is this app's deliberately arid, volcanic and polar pool, not Earth as a whole, while the Mars
+  distribution is the whole planet. The two references are not symmetric;
+- ATI ignores the thermal-model terms that convert it to true inertia (insolation, sky conditions, time of the overpass pair,
+  subsurface layering);
+- the TES map is ~3 km per pixel, so a 12 km window holds about 16 source pixels;
+- the Moon has no thermal inertia product in the archives reachable from this build, so **every Moon target reports this feature
+  missing, with that reason**. Switching the feature on for a Moon target drops it from the request with a visible warning.
+
+### 9.3 Missing coverage is never flattered
+
+The layer is partial by construction: ECOSTRESS does not reach beyond about ±52° latitude, EMIT flies over selected arid regions,
+and cloud screening removes scenes. The existing missing-data policy (section 5) therefore applies unchanged: a candidate without
+the measurement gets the missing-feature penalty, its coverage drops below 100 %, and at the default coverage threshold it is not
+ranked at all but listed with the reason. The UI states how many Earth windows carry the measurement next to the feature's own
+weight slider, and warns that at 100 % coverage the rest will not be ranked.
+
+### 9.4 Mineralogy is shown, not scored
+
+EMIT gives mineral identifications for Earth windows, and no archived planetary product measuring the same thing was found in the
+hosts reachable here (see DATA_SOURCES.md, "Investigated but not integrated"). Rather than invent a cross-body mineral distance,
+the mineral classes are displayed per candidate — dominant class per EMIT group, class-fraction bars, swath coverage — and take no
+part in the distance. The class grouping is a documented set of substring rules over the product's spectral-library names
+(served at `/api/environment`), not an EMIT product.
+
+### 9.5 Reproducibility
+
+`python -m pipeline.build_env` is resumable: each window's reduction is cached under `data/cache/env/<id>.json`, so an
+interrupted or extended run continues instead of re-downloading. The build records its parameters, the scenes and granules used
+per window, the percentile references and the software versions in `environment.json`.

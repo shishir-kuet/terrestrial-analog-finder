@@ -1,72 +1,242 @@
 {
-  "integrated": [
-    {
-      "id": "usgs-ard-barker-lola-south-pole-dtm",
-      "name": "Barker LOLA South Polar DTMs (USGS Astrogeology analysis-ready data)",
-      "body": "moon",
-      "provider": "NASA LRO / LOLA team (Barker et al.); processed into analysis-ready COGs by the USGS Astrogeology Science Center",
-      "source_url": "https://astrogeo-ard.s3-us-west-2.amazonaws.com/moon/lro/lola/barker_south_pole_dems/",
-      "doi": "https://doi.org/10.5066/P13YV93V",
-      "citation": "Barker, M. K., et al. (2026). Lunar south polar digital terrain models from LOLA. https://doi.org/10.5066/P13YV93V (as given in the STAC item sci:citation field)",
-      "variables": ["height (asset 'dtm')"],
-      "units": "metres above the IAU 2015 lunar sphere (R = 1 737 400 m)",
-      "spatial_resolution": "5 m/pixel posting (effective resolution set by LOLA track density, coarser than the posting)",
-      "spatial_coverage": "27 sites near the lunar south pole, each ~16-30 km square; 8 used here",
-      "temporal_coverage": "LOLA observations 2009-08-20 to 2021-09-30 (STAC start/end datetime)",
-      "crs": "IAU_2015:30135 (Moon 2015 sphere, south polar stereographic)",
-      "license": "CC0-1.0 (STAC item 'license')",
-      "authentication": "none (public AWS S3 bucket)",
-      "access_method": "HTTP range reads of Cloud-Optimized GeoTIFFs referenced by per-site STAC items",
-      "preprocessing": "Reprojected into a 12 km x 12 km local azimuthal-equidistant window (same sphere) at 30 m with GDAL 'average' resampling (aggregation of ~6x6 source pixels).",
-      "limitations": "Polar illumination and permanently shadowed regions do not affect height values but LOLA data density varies; 5 m posting overstates true resolution; only south-polar sites available in this product."
-    },
-    {
-      "id": "usgs-ard-mro-ctx-controlled-dtm",
-      "name": "MRO CTX controlled DTMs (USGS Astrogeology analysis-ready data)",
-      "body": "mars",
-      "provider": "NASA MRO Context Camera (MSSS/JPL); DTMs produced by the USGS Astrogeology Science Center with the Ames Stereo Pipeline",
-      "source_url": "https://astrogeo-ard.s3-us-west-2.amazonaws.com/mars/mro/ctx/controlled/usgs/",
-      "doi": null,
-      "citation": "USGS Astrogeology Science Center, MRO CTX controlled DTMs (STAC collection 'mro_ctx_controlled_usgs_dtms'); per-item STAC URLs are listed on each target.",
-      "variables": ["height (asset 'dtm')"],
-      "units": "metres; aligned to MOLA and adjusted to the Mars aeroid (per STAC description)",
-      "spatial_resolution": "~20 m/pixel (from ~6 m/pixel stereo images)",
-      "spatial_coverage": "44 628 stereo-pair footprints (index 'collectionindices/mro_ctx_controlled_usgs_dtms.parquet'); 4 used here",
-      "temporal_coverage": "Product creation 2023 (STAC datetime); source images span the MRO mission",
-      "crs": "Mars 2015 sphere (R = 3 396 190 m), equirectangular",
-      "license": "CC0-1.0 (STAC item 'license')",
-      "authentication": "none (public AWS S3 bucket)",
-      "access_method": "HTTP range reads of Cloud-Optimized GeoTIFFs referenced by per-pair STAC items",
-      "preprocessing": "Reprojected into a 12 km x 12 km local azimuthal-equidistant window at 30 m with GDAL 'average' resampling.",
-      "limitations": "Automated stereo DTMs contain matching noise and occasional artefacts; footprints are narrow strips so a 12 km window may need to be shifted to find full coverage (recorded per target)."
-    },
-    {
-      "id": "copernicus-dem-glo30",
-      "name": "Copernicus DEM GLO-30 Public (ESA / Copernicus), AWS Open Data COGs",
-      "body": "earth",
-      "provider": "European Space Agency / Copernicus Programme (DLR & Airbus Defence and Space, TanDEM-X mission); COG conversion and hosting on the AWS Registry of Open Data",
-      "source_url": "https://copernicus-dem-30m.s3.amazonaws.com/readme.html",
-      "doi": null,
-      "citation": "Copernicus DEM GLO-30 (COP-DEM_GLO-30-DGED). (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.",
-      "variables": ["surface height"],
-      "units": "metres (EGM2008 geoid heights per the Copernicus DEM product handbook; not verifiable from the build environment)",
-      "spatial_resolution": "1 arc-second (~30 m) in latitude; longitude spacing widens above 50 degrees latitude",
-      "spatial_coverage": "Global land, except tiles not released publicly; ocean areas have no tiles",
-      "temporal_coverage": "TanDEM-X acquisitions 2011-2015",
-      "crs": "WGS84 geographic (EPSG:4326)",
-      "license": "Copernicus DEM licence: free use with attribution (see the provider's licence text)",
-      "authentication": "none (public AWS S3 bucket)",
-      "access_method": "HTTP range reads of 1x1 degree Cloud-Optimized GeoTIFF tiles; tile existence checked against the bucket's tileList.txt (cached in data/sources)",
-      "preprocessing": "Each 12 km window is warped from all overlapping tiles into a local azimuthal-equidistant grid (WGS84 ellipsoid) at 30 m with bilinear resampling. Missing tiles stay missing; we do NOT assume zero height over ocean.",
-      "limitations": "Digital SURFACE model: vegetation, buildings and ice surfaces are included. Water bodies are flattened. Not a NASA product (NASA NASADEM/SRTM require Earthdata Login, which was unreachable from the build environment)."
-    }
-  ],
-  "investigated_not_integrated": [
-    {"name": "NASA Earthdata Search / CMR", "url": "https://search.earthdata.nasa.gov/", "status": "Not reachable from the build environment (egress policy). Most products also require a free Earthdata Login.", "would_provide": "NASADEM, SRTM, ASTER GDEM elevation; MODIS/VIIRS land surface temperature"},
-    {"name": "NASA AppEEARS", "url": "https://appeears.earthdatacloud.nasa.gov/", "status": "Not reachable; requires Earthdata Login token. Supported products were not verified.", "would_provide": "Point/area extraction of ECOSTRESS LST and other land products"},
-    {"name": "ECOSTRESS land surface temperature", "url": "https://ecostress.jpl.nasa.gov/", "status": "Not reachable/not integrated. Earth LST (skin temperature under an atmosphere, at ISS overpass times) is not directly comparable with airless lunar or thin-atmosphere Martian surface temperatures without a physical model.", "would_provide": "Thermal context for Earth candidates"},
-    {"name": "EMIT surface mineralogy", "url": "https://earth.jpl.nasa.gov/emit/", "status": "Not reachable/not integrated; coverage limited to arid dust-source regions; cross-body mineral comparison requires matching spectral products (e.g. CRISM, M3).", "would_provide": "Mineral group abundances"},
-    {"name": "NASA Moon Trek / Mars Trek", "url": "https://trek.nasa.gov/", "status": "Not reachable. Visualization portals; no supported public scientific API was verified, so they are not used as a data source.", "would_provide": "Planetary basemaps for display"},
-    {"name": "NASA Planetary Data System (PDS Geosciences: LOLA LDEM, MOLA MEGDR)", "url": "https://pds-geosciences.wustl.edu/", "status": "Not reachable. The same LOLA team products are available through the USGS analysis-ready archive used here.", "would_provide": "Global lunar and Martian DEMs at coarser resolution"}
-  ]
+ "integrated": [
+  {
+   "id": "usgs-ard-barker-lola-south-pole-dtm",
+   "name": "Barker LOLA South Polar DTMs (USGS Astrogeology analysis-ready data)",
+   "body": "moon",
+   "provider": "NASA LRO / LOLA team (Barker et al.); processed into analysis-ready COGs by the USGS Astrogeology Science Center",
+   "source_url": "https://astrogeo-ard.s3-us-west-2.amazonaws.com/moon/lro/lola/barker_south_pole_dems/",
+   "doi": "https://doi.org/10.5066/P13YV93V",
+   "citation": "Barker, M. K., et al. (2026). Lunar south polar digital terrain models from LOLA. https://doi.org/10.5066/P13YV93V (as given in the STAC item sci:citation field)",
+   "variables": [
+    "height (asset 'dtm')"
+   ],
+   "units": "metres above the IAU 2015 lunar sphere (R = 1 737 400 m)",
+   "spatial_resolution": "5 m/pixel posting (effective resolution set by LOLA track density, coarser than the posting)",
+   "spatial_coverage": "27 sites near the lunar south pole, each ~16-30 km square; 8 used here",
+   "temporal_coverage": "LOLA observations 2009-08-20 to 2021-09-30 (STAC start/end datetime)",
+   "crs": "IAU_2015:30135 (Moon 2015 sphere, south polar stereographic)",
+   "license": "CC0-1.0 (STAC item 'license')",
+   "authentication": "none (public AWS S3 bucket)",
+   "access_method": "HTTP range reads of Cloud-Optimized GeoTIFFs referenced by per-site STAC items",
+   "preprocessing": "Reprojected into a 12 km x 12 km local azimuthal-equidistant window (same sphere) at 30 m with GDAL 'average' resampling (aggregation of ~6x6 source pixels).",
+   "limitations": "Polar illumination and permanently shadowed regions do not affect height values but LOLA data density varies; 5 m posting overstates true resolution; only south-polar sites available in this product."
+  },
+  {
+   "id": "usgs-ard-mro-ctx-controlled-dtm",
+   "name": "MRO CTX controlled DTMs (USGS Astrogeology analysis-ready data)",
+   "body": "mars",
+   "provider": "NASA MRO Context Camera (MSSS/JPL); DTMs produced by the USGS Astrogeology Science Center with the Ames Stereo Pipeline",
+   "source_url": "https://astrogeo-ard.s3-us-west-2.amazonaws.com/mars/mro/ctx/controlled/usgs/",
+   "doi": null,
+   "citation": "USGS Astrogeology Science Center, MRO CTX controlled DTMs (STAC collection 'mro_ctx_controlled_usgs_dtms'); per-item STAC URLs are listed on each target.",
+   "variables": [
+    "height (asset 'dtm')"
+   ],
+   "units": "metres; aligned to MOLA and adjusted to the Mars aeroid (per STAC description)",
+   "spatial_resolution": "~20 m/pixel (from ~6 m/pixel stereo images)",
+   "spatial_coverage": "44 628 stereo-pair footprints (index 'collectionindices/mro_ctx_controlled_usgs_dtms.parquet'); 4 used here",
+   "temporal_coverage": "Product creation 2023 (STAC datetime); source images span the MRO mission",
+   "crs": "Mars 2015 sphere (R = 3 396 190 m), equirectangular",
+   "license": "CC0-1.0 (STAC item 'license')",
+   "authentication": "none (public AWS S3 bucket)",
+   "access_method": "HTTP range reads of Cloud-Optimized GeoTIFFs referenced by per-pair STAC items",
+   "preprocessing": "Reprojected into a 12 km x 12 km local azimuthal-equidistant window at 30 m with GDAL 'average' resampling.",
+   "limitations": "Automated stereo DTMs contain matching noise and occasional artefacts; footprints are narrow strips so a 12 km window may need to be shifted to find full coverage (recorded per target)."
+  },
+  {
+   "id": "copernicus-dem-glo30",
+   "name": "Copernicus DEM GLO-30 Public (ESA / Copernicus), AWS Open Data COGs",
+   "body": "earth",
+   "provider": "European Space Agency / Copernicus Programme (DLR & Airbus Defence and Space, TanDEM-X mission); COG conversion and hosting on the AWS Registry of Open Data",
+   "source_url": "https://copernicus-dem-30m.s3.amazonaws.com/readme.html",
+   "doi": null,
+   "citation": "Copernicus DEM GLO-30 (COP-DEM_GLO-30-DGED). (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+   "variables": [
+    "surface height"
+   ],
+   "units": "metres (EGM2008 geoid heights per the Copernicus DEM product handbook; not verifiable from the build environment)",
+   "spatial_resolution": "1 arc-second (~30 m) in latitude; longitude spacing widens above 50 degrees latitude",
+   "spatial_coverage": "Global land, except tiles not released publicly; ocean areas have no tiles",
+   "temporal_coverage": "TanDEM-X acquisitions 2011-2015",
+   "crs": "WGS84 geographic (EPSG:4326)",
+   "license": "Copernicus DEM licence: free use with attribution (see the provider's licence text)",
+   "authentication": "none (public AWS S3 bucket)",
+   "access_method": "HTTP range reads of 1x1 degree Cloud-Optimized GeoTIFF tiles; tile existence checked against the bucket's tileList.txt (cached in data/sources)",
+   "preprocessing": "Each 12 km window is warped from all overlapping tiles into a local azimuthal-equidistant grid (WGS84 ellipsoid) at 30 m with bilinear resampling. Missing tiles stay missing; we do NOT assume zero height over ocean.",
+   "limitations": "Digital SURFACE model: vegetation, buildings and ice surfaces are included. Water bodies are flattened. Not a NASA product (NASA NASADEM/SRTM require Earthdata Login, which was unreachable from the build environment)."
+  },
+  {
+   "id": "ecostress-l2t-lste-v002",
+   "name": "ECOSTRESS land-surface temperature (ECO_L2T_LSTE v002)",
+   "body": "earth",
+   "provider": "NASA JPL / ECOSTRESS on the ISS; distributed by the NASA LP DAAC",
+   "source_url": "https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/ECO_L2T_LSTE.002/",
+   "doi": null,
+   "citation": "ECOSTRESS Science Team, ECOSTRESS Tiled Land Surface Temperature and Emissivity Instantaneous L2 Global 70 m V002, NASA LP DAAC. Granule ids used are recorded per location.",
+   "variables": [
+    "LST",
+    "cloud mask",
+    "water mask"
+   ],
+   "units": "K",
+   "spatial_resolution": "70 m on the Sentinel-2 MGRS grid",
+   "spatial_coverage": "about 52 S to 52 N (ISS orbit), in swaths",
+   "temporal_coverage": "v002 archive; the scenes used are listed per location",
+   "crs": "UTM per MGRS tile",
+   "license": "Open NASA data; LP DAAC data-use guidance; attribution requested",
+   "authentication": "NASA Earthdata Login (bearer token); the distribution endpoint redirects to a signed CloudFront URL",
+   "access_method": "CMR granule search, then GDAL HTTP range reads of the Cloud-Optimized GeoTIFF assets",
+   "preprocessing": "Scenes restricted to local solar 11:00-16:00 (day) and 22:00-05:00 (night); cloud and water flags and temperatures outside 200-360 K masked; a scene must cover >= 40% of the window; 3-4 scenes per side reduced to a per-pixel median; the day-night pair must cover >= 60% of the window.",
+   "limitations": "Skin temperature under an atmosphere, so not comparable with lunar or Martian surface temperature; only the derived apparent thermal inertia is used, as a within-body rank. Overpass local time drifts; cloud screening is imperfect; no coverage above about 52 degrees latitude."
+  },
+  {
+   "id": "viirs-vnp43ma3-v002",
+   "name": "VIIRS/NPP BRDF white-sky shortwave albedo (VNP43MA3 v002)",
+   "body": "earth",
+   "provider": "NASA/NOAA Suomi-NPP VIIRS; NASA LP DAAC",
+   "source_url": "https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/VNP43MA3.002/",
+   "doi": null,
+   "citation": "VIIRS/NPP BRDF/Albedo Albedo Daily L3 Global 1 km SIN Grid V002, NASA LP DAAC. Granule ids used are recorded per location.",
+   "variables": [
+    "Albedo_WSA_shortwave",
+    "BRDF_Albedo_Band_Mandatory_Quality_shortwave"
+   ],
+   "units": "unitless (scale factor 0.001; fill 32767)",
+   "spatial_resolution": "1 km, MODIS sinusoidal grid",
+   "spatial_coverage": "global land",
+   "temporal_coverage": "2022-01-01 and 2022-07-01, reduced to a median",
+   "crs": "MODIS sinusoidal (+proj=sinu +R=6371007.181)",
+   "license": "Open NASA data; LP DAAC data-use guidance",
+   "authentication": "NASA Earthdata Login (bearer token)",
+   "access_method": "CMR granule search, HDF5 download, band cached per tile, granule deleted",
+   "preprocessing": "Only cells with mandatory quality flag 0 (full BRDF inversion) kept; warped to the 12 km window grid; median of the two dates.",
+   "limitations": "1 km cells are far coarser than the 30 m window grid; two dates do not capture the seasonal cycle; snow cover on those dates biases polar windows."
+  },
+  {
+   "id": "emit-l2b-min-v002",
+   "name": "EMIT estimated mineral identification and band depth (EMITL2BMIN v002)",
+   "body": "earth",
+   "provider": "NASA JPL EMIT on the ISS; NASA LP DAAC",
+   "source_url": "https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/EMITL2BMIN.002/",
+   "doi": null,
+   "citation": "EMIT L2B Estimated Mineral Identification and Band Depth 60 m V002, NASA JPL/LP DAAC. Granule ids used are recorded per location.",
+   "variables": [
+    "group_1_mineral_id",
+    "group_1_band_depth",
+    "group_2_mineral_id",
+    "group_2_band_depth",
+    "mineral_metadata",
+    "location/glt_x",
+    "location/glt_y"
+   ],
+   "units": "mineral id (index into the product spectral library); band depth unitless",
+   "spatial_resolution": "60 m (ortho grid 0.000542 deg)",
+   "spatial_coverage": "arid dust-source regions, about 52 S to 52 N, in swaths",
+   "temporal_coverage": "per granule; recorded per location",
+   "crs": "EPSG:4326 (geotransform in the granule root attributes)",
+   "license": "Open NASA data; LP DAAC data-use guidance",
+   "authentication": "NASA Earthdata Login (bearer token)",
+   "access_method": "CMR granule search, netCDF/HDF5 download, orthorectification through the product's own GLT, then deletion",
+   "preprocessing": "Up to 3 granules merged (newest first, each filling only uncovered cells); a window needs >= 50% swath coverage; spectral-library names grouped into mineral classes by documented substring rules (served at /api/environment); pixels with no identification counted as a measured 'no diagnostic absorption'.",
+   "limitations": "Per-pixel spectral-library matches of surface spectra, not bulk composition. The class grouping is this project's, not EMIT's. No equivalent archived planetary mineral product was reachable, so these values are displayed and never scored."
+  },
+  {
+   "id": "mgs-tes-thermal-inertia-night",
+   "name": "MGS TES derived nightside thermal inertia map",
+   "body": "mars",
+   "provider": "NASA MGS Thermal Emission Spectrometer; maps derived by N. E. Putzig and M. T. Mellon; PDS Geosciences Node",
+   "source_url": "https://pds-geosciences.wustl.edu/mgs/mgs-m-tes-5-timap-v1/mgst_9001/data/",
+   "doi": null,
+   "citation": "Putzig, N. E. and Mellon, M. T., MGS TES Derived Thermal Inertia Maps, MGS-M-TES-5-TIMAP-V1.0, NASA Planetary Data System (see Putzig & Mellon 2007; Putzig et al. 2005, listed in the archive's REF.CAT).",
+   "variables": [
+    "global_ti_night_2007",
+    "global_ti_msk_night_2007"
+   ],
+   "units": "J m^-2 K^-1 s^-1/2 (tiu); derived range 5-5000",
+   "spatial_resolution": "20 pixels/degree (2.96 km/pixel)",
+   "spatial_coverage": "global; infilled between 87 S and 87 N (archive states < 8% infilled)",
+   "temporal_coverage": "TES observations 1999-02 to 2004-04 (orbits 1583-24346)",
+   "crs": "simple cylindrical on a 3396.0 km sphere, planetocentric, east positive",
+   "license": "public domain (NASA PDS)",
+   "authentication": "none",
+   "access_method": "direct HTTP download of the PDS3 image, read as a raw MSB int16 array per its detached label",
+   "preprocessing": "Values outside 5-5000 tiu dropped; warped to the 12 km Mars window; window median reported with the interpolated-area fraction from the archive's mask.",
+   "limitations": "A 12 km window holds only about 16 source pixels, so values are regional. Model-derived, nightside only. The label's sphere radius (3396.0 km) differs from the CTX DTM sphere by about 190 m, which is irrelevant at 3 km sampling."
+  },
+  {
+   "id": "lro-diviner-prp-south",
+   "name": "LRO Diviner Polar Resource Product, south (LRO-L-DLRE-5-PRP-V2.0)",
+   "body": "moon",
+   "provider": "NASA LRO Diviner Lunar Radiometer Experiment team (D. A. Paige, UCLA); PDS Geosciences Node",
+   "source_url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/",
+   "doi": null,
+   "citation": "Paige, D. A. et al., LRO Diviner Derived Polar Resource Products, LRO-L-DLRE-5-PRP-V2.0, in bundle urn-nasa-pds-lro_diviner_derived1, NASA Planetary Data System.",
+   "variables": [
+    "temp_avg (annual average temperature at 2 cm depth)",
+    "temp_max (annual maximum surface temperature)",
+    "ice_depth (water-ice sublimation depth)"
+   ],
+   "units": "K; m",
+   "spatial_resolution": "triangular mesh of about 240 m facets (2 880 000 facets)",
+   "spatial_coverage": "75.9 S to the south pole",
+   "temporal_coverage": "product version 2, created 2018-02-21",
+   "crs": "planetocentric lat/lon on a 1737.4 km sphere",
+   "license": "public domain (NASA PDS)",
+   "authentication": "none",
+   "access_method": "direct HTTP download of the 605 MB ASCII table, parsed once and cached",
+   "preprocessing": "Facets whose centre falls inside the 12 km window (in the window's own projection) are selected, not resampled; a window needs >= 50 facets; medians reported.",
+   "limitations": "Modelled temperatures constrained by Diviner, not direct measurements, and illumination-driven: not thermal inertia and not comparable with the Earth or Mars thermal values, so displayed only. ice_depth = -999 means deeper than 2.8738 m per the label; the value -1 (3.5% of rows) is undocumented there, so both are treated as not reported."
+  }
+ ],
+ "investigated_not_integrated": [
+  {
+   "name": "NASA Earthdata Search / CMR",
+   "url": "https://search.earthdata.nasa.gov/",
+   "status": "CMR granule search is now used by the thermal and mineral build; the web UI is not.",
+   "would_provide": "Granule discovery for ECOSTRESS, VIIRS albedo and EMIT (now integrated)"
+  },
+  {
+   "name": "NASA AppEEARS",
+   "url": "https://appeears.earthdatacloud.nasa.gov/",
+   "status": "Not used: granules are read directly from the LP DAAC distribution endpoint. Its supported product list was not verified.",
+   "would_provide": "Task-based point/area extraction of the same products"
+  },
+  {
+   "name": "MODIS MCD43A3 albedo",
+   "url": "https://lpdaac.usgs.gov/products/mcd43a3v061/",
+   "status": "Not integrated: granules are HDF-EOS2 (HDF4) and this GDAL build has no HDF4 driver. VNP43MA3 (HDF5) is used instead.",
+   "would_provide": "500 m albedo instead of 1 km"
+  },
+  {
+   "name": "Mars mineral maps (MRO CRISM, MGS TES mineral abundance)",
+   "url": "https://pds-geosciences.wustl.edu/mro/",
+   "status": "Searched, not integrated. The reachable CRISM collections are targeted/multispectral radiance and summary products needing per-scene spectral processing, not a global mineral-class map, and pds.nasa.gov, ode.rsl.wustl.edu, astrogeology.usgs.gov and planetarymaps.usgs.gov are refused by this environment's egress policy. Without a counterpart, EMIT mineral classes stay Earth-side context.",
+   "would_provide": "A cross-body mineral-group comparison"
+  },
+  {
+   "name": "Lunar thermal inertia",
+   "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/",
+   "status": "Searched, not available. The reachable Diviner collections hold brightness temperatures, rock abundance (80 S to 80 N, so not the polar targets) and the modelled polar products that are integrated; no thermal inertia product. The thermal feature is reported missing for every Moon target with that reason.",
+   "would_provide": "A Moon side for the thermal-inertia comparison"
+  },
+  {
+   "name": "THEMIS Mars infrared mosaics (USGS archive)",
+   "url": "https://astrogeo-ard.s3-us-west-2.amazonaws.com/mars/mo/themis/",
+   "status": "Not used: the available mosaics are 8-bit rendered images, not calibrated temperatures.",
+   "would_provide": "Qualitative Martian thermal imagery"
+  },
+  {
+   "name": "NASA Moon Trek / Mars Trek",
+   "url": "https://trek.nasa.gov/",
+   "status": "Not reachable. Visualization portals; no supported public scientific API was verified, so they are not used as a data source.",
+   "would_provide": "Planetary basemaps for display"
+  },
+  {
+   "name": "PDS Geosciences elevation products (LOLA LDEM, MOLA MEGDR)",
+   "url": "https://pds-geosciences.wustl.edu/",
+   "status": "Reachable, but not needed for elevation: the same LOLA team products are used through the USGS analysis-ready archive. This host provides the TES and Diviner products that are integrated.",
+   "would_provide": "Global lunar and Martian DEMs at coarser resolution"
+  }
+ ]
 }

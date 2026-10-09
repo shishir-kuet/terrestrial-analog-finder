@@ -38,6 +38,12 @@ the event dates as 14–15 November 2026. Official datasets, rules and deliverab
 - An Earth candidate pool of **558 windows**: 20 named analog sites and 538 cells on a regular grid across 12 desert, polar and volcanic
   regions. 469 have complete data. 89 are explicitly excluded because of ocean, lakes or missing tiles, and are listed with the reason.
 - Five scalar terrain features plus one distribution feature, all from real DEM measurements.
+- A **thermal and mineral layer** measured from NASA Earthdata and PDS products: ECOSTRESS day/night land-surface temperature and
+  VIIRS albedo reduced to an apparent-thermal-inertia estimate per Earth window, EMIT mineral classes per Earth window, MGS TES
+  nightside thermal inertia per Mars window, and LRO Diviner modelled polar temperatures and ice-stability depth per Moon window.
+  One comparable feature comes out of it (thermal-inertia percentile within each body); it carries a default weight of 0, so the
+  terrain-only ranking stays exactly reproducible, and everything else is shown per candidate but never scored. Coverage is
+  partial by nature and is reported, never filled in (see [docs/METHODOLOGY.md](docs/METHODOLOGY.md) §9).
 - Weighted, robust-scaled distance with explicit missing-data rules, configurable weights and coverage threshold, and a
   per-feature contribution breakdown.
 - Leaflet map with similarity-coloured markers, legend, selection, filters and a basemap-failure fallback (graticule plus notice).
@@ -79,9 +85,16 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | Mars | MRO CTX controlled stereo DTMs, ~20 m, USGS Astrogeology analysis-ready data | Public COGs + STAC on `astrogeo-ard` S3 | CC0-1.0 |
 | Earth | Copernicus DEM GLO-30 (ESA), with each tile's Water Body Mask | Public COGs on `copernicus-dem-30m` S3 | Copernicus DEM licence (attribution) |
 
-The following were investigated but **not integrated**: NASA Earthdata/CMR, AppEEARS, ECOSTRESS, EMIT, Moon/Mars Trek and PDS Geosciences.
-They were unreachable from the build environment, and most also require Earthdata Login. Details, units, CRSs and limitations
-are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
+| Earth | ECOSTRESS `ECO_L2T_LSTE` v002 land-surface temperature, 70 m | CMR search + LP DAAC range reads (Earthdata Login) | Open NASA data |
+| Earth | VIIRS `VNP43MA3` v002 white-sky shortwave albedo, 1 km | CMR search + LP DAAC download (Earthdata Login) | Open NASA data |
+| Earth | EMIT `EMITL2BMIN` v002 mineral identification, 60 m | CMR search + LP DAAC download (Earthdata Login) | Open NASA data |
+| Mars | MGS TES derived nightside thermal inertia, 20 pix/deg (`MGS-M-TES-5-TIMAP-V1.0`) | PDS Geosciences Node, direct download | Public domain |
+| Moon | LRO Diviner Polar Resource Product, south (`LRO-L-DLRE-5-PRP-V2.0`) | PDS Geosciences Node, direct download | Public domain |
+
+Investigated and **not integrated**: AppEEARS, MODIS `MCD43A3` albedo (HDF4, no driver here), Mars mineral maps (no archived
+global mineral-class product reachable), lunar thermal inertia (no such product in the reachable archives), THEMIS IR mosaics
+(rendered images, not temperatures) and Moon/Mars Trek (visualisation portals, no verified data API). Details, units, CRSs,
+authentication and limitations for all of these are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
 
 ## 7. Scientific methodology (summary)
 
@@ -163,21 +176,30 @@ Rebuilding the data from the public sources:
 cd backend
 ../.venv/bin/python -m pipeline.build          # ~570 windows; cached under data/cache/windows (~250 MB)
 ../.venv/bin/python -m pipeline.sensitivity    # needs the cache from the previous step
+../.venv/bin/python -m pipeline.build_env      # thermal + mineral layer; needs EARTHDATA_TOKEN
 ```
 
 Use `--refresh` to re-download, or `--only targets,named,survey` to rebuild part of the set.
 
+`pipeline.build_env` is separate and resumable: each window is cached under `data/cache/env/<id>.json`, and `--limit N` measures
+only the next N. It needs a free [NASA Earthdata Login](https://urs.earthdata.nasa.gov/) token in `EARTHDATA_TOKEN` (see
+`.env.example`); the PDS products need none. It writes `data/processed/environment.json`, which the API merges onto the terrain
+records, so running it changes no terrain value.
+
 ## 12. Testing
 
 ```bash
-cd backend && ../.venv/bin/python -m pytest -q       # 46 tests: features, engine, sources, API, data integrity
-cd frontend && npm test && npm run typecheck && npm run lint && npm run build   # 20 tests + checks
+cd backend && ../.venv/bin/python -m pytest -q       # 78 tests: features, engine, sources, environmental layer, API, data integrity
+cd frontend && npm test && npm run typecheck && npm run lint && npm run build   # 25 tests + checks
 ```
 
 Passing tests show the software computes what is documented. They do **not** show that the scientific comparison is valid.
 
 ## 13. Data attribution
 
+- ECOSTRESS LST (`ECO_L2T_LSTE` v002), VIIRS albedo (`VNP43MA3` v002) and EMIT mineral identification (`EMITL2BMIN` v002): NASA JPL / NASA LP DAAC, retrieved through NASA Earthdata (CMR + LP DAAC distribution). Open NASA data; see the LP DAAC data-use guidance.
+- MGS TES derived thermal inertia maps: Putzig, N. E. and Mellon, M. T., `MGS-M-TES-5-TIMAP-V1.0`, NASA Planetary Data System (Geosciences Node).
+- LRO Diviner Polar Resource Products: Paige, D. A. et al., `LRO-L-DLRE-5-PRP-V2.0`, NASA Planetary Data System (Geosciences Node).
 - Lunar DTMs: Barker, M. K., et al., *Lunar south polar digital terrain models from LOLA*, https://doi.org/10.5066/P13YV93V. LRO/LOLA (NASA). Analysis-ready data by USGS Astrogeology. CC0.
 - Martian DTMs: USGS Astrogeology Science Center, MRO CTX controlled DTMs (Ames Stereo Pipeline), from NASA MRO CTX images. CC0.
 - Copernicus DEM GLO-30: © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.
@@ -191,8 +213,14 @@ These are summarised here. The full list is in [docs/SCIENTIFIC_LIMITATIONS.md](
   window size changes the top-10 most (median overlap 4/10).
 - Earth heights come from a *surface* model that includes vegetation and buildings. Short-baseline roughness is near the noise floor of the planetary DTMs.
 - Named-site coordinates are **approximate and unverified**. The survey grid covers 12 regions, not the whole Earth.
-- No temperature, mineralogy or illumination features are integrated, because the Earthdata-hosted sources were unreachable.
-  Cross-body temperature comparison would also need physical modelling.
+- Thermal and mineral coverage is partial: ECOSTRESS reaches only about ±52° latitude, EMIT flies over selected arid regions, and
+  no lunar thermal-inertia product exists in the reachable archives, so Moon targets cannot use the thermal feature at all.
+- The cross-body thermal comparison is **ordinal**: Earth apparent thermal inertia (K⁻¹) and Mars TES thermal inertia (tiu) are
+  different quantities, and only their within-body percentiles are compared. The two distributions are not calibrated against each
+  other, and the Earth reference is this app's arid/volcanic/polar pool rather than Earth as a whole.
+- Mineral identifications are per-pixel spectral-library matches grouped into classes by this project; they are displayed, never
+  scored, because no equivalent planetary product was reachable.
+- Illumination is still not represented.
 - The Docker image and the OpenStreetMap basemap could not be checked from the build environment. The map fallback has been checked.
 
 ## 15. Future improvements

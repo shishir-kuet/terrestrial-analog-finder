@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import features as fx
-from app.registry import FEATURES
+from app.registry import ENVIRONMENTAL_FEATURES, FEATURES
 from app.schemas import CandidateOut, FeatureComparisonOut, SearchRequest, SearchResponse
 from app.similarity import DEFAULT_MISSING_PENALTY, CandidateResult, SimilarityError, rank
 from app.store import DataUnavailable, Store
@@ -46,7 +46,8 @@ async def _data_unavailable(_, exc: DataUnavailable):
 
 def _summary(r: dict) -> dict:
     keys = ("id", "name", "kind", "body", "lat", "lon", "coordinate_status", "status", "valid_fraction",
-            "features", "missing_reasons", "dataset_id", "hillshade", "region", "analog_context")
+            "features", "missing_reasons", "dataset_id", "hillshade", "region", "analog_context",
+            "environment")
     return {k: r.get(k) for k in keys}
 
 
@@ -74,6 +75,35 @@ def datasets():
 @app.get("/api/features")
 def feature_defs():
     return {"features": [f.to_dict() for f in FEATURES.values()], "scales": store.scales}
+
+
+@app.get("/api/environment")
+def environment():
+    """What the environmental (thermal and mineral) data build covers.
+
+    Separate from /api/methodology because this layer is partial by nature:
+    ECOSTRESS, VIIRS and EMIT coverage is uneven, so the counts here say how
+    many windows actually carry each measurement.
+    """
+    env = store.environment
+    earth = [r for r in store.earth if r["status"] == "ok"]
+    with_thermal = sum(1 for r in earth if r["features"].get("thermal_inertia_percentile") is not None)
+    with_minerals = sum(1 for r in earth
+                        if (r.get("environment") or {}).get("attributes", {}).get("mineral_group2_dominant_class"))
+    return {
+        "built_at": env.get("built_at"),
+        "parameters": env.get("parameters", {}),
+        "percentile_reference": env.get("percentile_reference"),
+        "counts": env.get("counts", {}),
+        "earth_windows_ok": len(earth),
+        "earth_windows_with_thermal_feature": with_thermal,
+        "earth_windows_with_mineral_classes": with_minerals,
+        "comparable_features": list(ENVIRONMENTAL_FEATURES),
+        "display_only": "Everything else measured here (day/night LST, albedo, Mars thermal inertia in tiu, "
+                        "lunar modelled temperatures and ice-stability depth, EMIT mineral classes) is shown "
+                        "per location but never used in scoring: no planetary counterpart was found in the "
+                        "archives reachable here that measures the same quantity.",
+    }
 
 
 @app.get("/api/targets")
@@ -125,6 +155,9 @@ def location_features(loc_id: str):
         "rel_elev_quantiles": r.get("rel_elev_quantiles"),
         "absolute_elevation_median_m": r.get("absolute_elevation_median_m"),
         "absolute_elevation_note": "Reported for context only and never compared: vertical datums differ between bodies.",
+        "environment": r.get("environment"),
+        "environment_note": "Thermal and mineral measurements. Only "
+        f"{', '.join(ENVIRONMENTAL_FEATURES)} takes part in scoring; the rest is context.",
     }
 
 
@@ -147,6 +180,12 @@ def hillshade(loc_id: str):
     if not r.get("hillshade"):
         raise HTTPException(404, "no hillshade for this location")
     return FileResponse(store.processed / r["hillshade"], media_type="image/png")
+
+
+def _has_feature(loc: dict, key: str) -> bool:
+    if FEATURES[key].kind == "distribution":
+        return bool(loc.get("slope_hist"))
+    return loc["features"].get(key) is not None
 
 
 def _out(res: CandidateResult, rank_no: int | None) -> CandidateOut:
@@ -195,6 +234,7 @@ def search(req: SearchRequest):
             "min_coverage": req.min_coverage,
             "missing_penalty": req.missing_penalty,
             "reference_pool_size": len(store.reference_pool),
+            "candidate_coverage": {k: sum(1 for c in cands if _has_feature(c, k)) for k in used},
             "data_built_at": store.manifest.get("built_at"),
         },
         results=[_out(r, i + 1) for i, r in enumerate(ranked[: req.limit])],
@@ -225,6 +265,14 @@ def methodology():
         "weights": "Non-negative, finite; all-zero rejected; normalised to sum to 1 for reporting.",
         "interpretation": INTERPRETATION,
         "manifest": m,
+        "environmental_layer": {
+            "summary": "Thermal and mineral measurements are built separately (see /api/environment) and "
+                       "merged onto these records. Only 'thermal_inertia_percentile' is comparable across "
+                       "bodies, it carries a default weight of 0, and the terrain-only ranking is therefore "
+                       "unchanged unless it is switched on.",
+            "built_at": store.environment.get("built_at"),
+            "counts": store.environment.get("counts", {}),
+        },
         "sensitivity": store.sensitivity,
     }
 

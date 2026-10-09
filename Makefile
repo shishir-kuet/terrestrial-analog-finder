@@ -3,7 +3,7 @@ PY ?= python3
 VENV = .venv
 BIN = $(VENV)/bin
 
-.PHONY: setup data sensitivity api web test lint build docker
+.PHONY: setup data env-data sensitivity api web test lint build docker
 
 setup:            ## create venv and install backend + frontend dependencies
 	$(PY) -m venv $(VENV)
@@ -12,6 +12,9 @@ setup:            ## create venv and install backend + frontend dependencies
 
 data:             ## (re)build data/processed from the public sources (uses data/cache)
 	cd backend && ../$(BIN)/python -m pipeline.build
+
+env-data:         ## (re)build the thermal and mineral layer (needs a NASA Earthdata token; resumable)
+	cd backend && ../$(BIN)/python -m pipeline.build_env
 
 sensitivity:      ## recompute the sensitivity analysis (needs data/cache from `make data`)
 	cd backend && ../$(BIN)/python -m pipeline.sensitivity

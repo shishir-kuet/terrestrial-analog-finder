@@ -12,7 +12,9 @@ import { useAsync } from '../lib/useAsync';
 type Weights = Record<string, { on: boolean; w: number }>;
 
 function defaultWeights(defs: FeatureDef[]): Weights {
-  return Object.fromEntries(defs.map((d) => [d.key, { on: true, w: d.default_weight }]));
+  // Features with a default weight of 0 start switched off, so the default
+  // search is the terrain-only ranking the methodology describes.
+  return Object.fromEntries(defs.map((d) => [d.key, { on: d.default_weight > 0, w: d.default_weight }]));
 }
 
 export default function Explorer() {
@@ -22,6 +24,7 @@ export default function Explorer() {
   const poolQ = useAsync(() => api.earth(), []);
   const regionsQ = useAsync(() => api.regions(), []);
   const datasetsQ = useAsync(() => api.datasets(), []);
+  const envQ = useAsync(() => api.environment(), []);
 
   const [weights, setWeights] = useState<Weights>({});
   const [kinds, setKinds] = useState({ earth_named: true, earth_survey: true });
@@ -34,6 +37,11 @@ export default function Explorer() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [listFilter, setListFilter] = useState<'all' | 'earth_named' | 'earth_survey'>('all');
   const [showExcluded, setShowExcluded] = useState(false);
+
+  const envFeatures = envQ.data?.comparable_features ?? [];
+  const envCoverage = envQ.data
+    ? { measured: envQ.data.earth_windows_with_thermal_feature, total: envQ.data.earth_windows_ok }
+    : null;
 
   const defs = useMemo(() => Object.fromEntries((featuresQ.data?.features ?? []).map((f) => [f.key, f])), [featuresQ.data]);
 
@@ -161,6 +169,13 @@ export default function Explorer() {
                 </div>
                 <input type="range" min={0} max={3} step={0.25} value={w.w} disabled={!w.on} aria-label={`Weight for ${f.label}`}
                   className="w-full accent-sky-400" onChange={(e) => setWeights({ ...weights, [f.key]: { ...w, w: +e.target.value } })} />
+                {envCoverage !== null && envFeatures.includes(f.key) && (
+                  <p className={`text-[11px] ${w.on && w.w > 0 ? 'text-amber-300' : 'text-slate-500'}`}>
+                    Measured for {envCoverage.measured} of {envCoverage.total} Earth windows
+                    {target && target.features[f.key] === null && ` · not available for ${target.name}`}
+                    {w.on && w.w > 0 && minCoverage === 1 && ' · at 100 % coverage the rest will not be ranked'}
+                  </p>
+                )}
               </div>
             );
           })}

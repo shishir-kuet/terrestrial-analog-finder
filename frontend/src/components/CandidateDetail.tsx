@@ -4,6 +4,7 @@ import { fmtCoord, fmtValue, KIND_LABEL } from '../lib/format';
 import type { Candidate, Dataset, FeatureDef, SearchResponse } from '../lib/types';
 import { useAsync } from '../lib/useAsync';
 import { ContributionChart, HypsoChart, SlopeDistChart } from './Charts';
+import EnvironmentPanel from './Environment';
 import { CoordBadge, ErrorBox, Loading, SectionTitle } from './StateViews';
 
 interface Props {
@@ -131,6 +132,17 @@ export default function CandidateDetail({ candidate: c, response, defs, datasets
             <SectionTitle sub="Elevation relative to each window's median (datum-independent). A hypsometric curve on its side.">Relative elevation distribution</SectionTitle>
             <HypsoChart series={[{ name: `Reference: ${t.name}`, values: t.rel_elev_quantiles }, { name: c.name.slice(0, 40), values: detail.data.rel_elev_quantiles }]} />
           </section>
+          <section>
+            <SectionTitle sub="Measured from ECOSTRESS, VIIRS, EMIT, MGS TES and LRO Diviner. Only the thermal-inertia percentile takes part in scoring; everything here is context, because no planetary counterpart measuring the same quantity was found in the archives reachable from this build.">
+              Thermal and mineral measurements
+            </SectionTitle>
+            <div className="grid gap-3 md:grid-cols-2">
+              <EnvironmentPanel env={t.environment} title={`Reference: ${tName}`}
+                missingReason={t.missing_reasons?.thermal_inertia_percentile} />
+              <EnvironmentPanel env={detail.data.environment} title={`Candidate: ${c.name}`}
+                missingReason={detail.data.missing_reasons?.thermal_inertia_percentile} />
+            </div>
+          </section>
           <section className="text-sm">
             <SectionTitle>Sources and processing</SectionTitle>
             <ul className="space-y-1 text-slate-300">
@@ -147,7 +159,9 @@ export default function CandidateDetail({ candidate: c, response, defs, datasets
       <section className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-100/90">
         <p className="font-semibold">Limitations</p>
         <ul className="mt-1 list-disc space-y-0.5 pl-4">
-          <li>Terrain-only, 12 km-scale comparison. Gravity, atmosphere, regolith, temperature, radiation, illumination and composition are not considered.</li>
+          <li>Ranking is terrain-based at the 12 km scale. Gravity, atmosphere, regolith depth, radiation and illumination are not considered, and the thermal measurements take part only when their feature is given a weight.</li>
+          <li>Where the thermal-inertia percentile is used, Earth's apparent thermal inertia and Mars' TES thermal inertia are different quantities in different units; only their ranks within each body are compared, and the two distributions are not calibrated against each other.</li>
+          <li>Mineral identifications come from EMIT's spectral-library match per pixel, grouped into classes by this project; they describe surface spectra, not bulk rock composition, and have no planetary counterpart here.</li>
           <li>The Copernicus DEM is a surface model (vegetation and buildings included); planetary DTMs are bare surfaces with their own interpolation and stereo noise.</li>
           <li>A high index means similar measured terrain statistics, not a physically identical environment, a landing site or a safe habitat location.</li>
           {c.coordinate_status === 'approximate_unverified' && <li>This site's coordinates are approximate and unverified; the window may not be centred on the named feature.</li>}
