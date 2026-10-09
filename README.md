@@ -139,6 +139,19 @@ cd backend && ../.venv/bin/uvicorn app.main:app --port 8000
 cd frontend && npm run dev
 ```
 
+**Windows (PowerShell)**, from the project folder:
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\pip install -r backend\requirements-dev.txt
+cd frontend; npm ci; npm run build; cd ..
+cd backend; ..\.venv\Scripts\uvicorn app.main:app --port 8000
+# open http://127.0.0.1:8000/   (tests: ..\.venv\Scripts\python -m pytest -q)
+```
+
+These Windows steps have not been run on Windows yet. rasterio and pyproj are only needed for the pipeline and tests. To just run
+the app, `backend\requirements.txt` is enough.
+
 Single-process demo: run `cd frontend && npm run build`, then start the API. It serves `frontend/dist` at http://127.0.0.1:8000/.
 
 Docker: `docker compose up --build` builds the frontend and serves everything on port 8000. *The Dockerfile has not been run
