@@ -1,0 +1,26 @@
+{
+  "built_at": "2026-10-09T18:19:51+00:00",
+  "window_size_m": 12000.0,
+  "grid_res_m": 30.0,
+  "min_valid_fraction": 0.95,
+  "roughness_kernel_px": 5,
+  "counts": {
+    "target": {
+      "ok": 12
+    },
+    "earth_named": {
+      "ok": 18,
+      "insufficient_data": 2
+    },
+    "earth_survey": {
+      "ok": 451,
+      "insufficient_data": 87
+    }
+  },
+  "software": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "rasterio": "1.5.2",
+    "gdal": "3.12.2"
+  }
+}

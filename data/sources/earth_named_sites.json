@@ -1,0 +1,26 @@
+{
+  "_comment": "Named terrestrial analog sites frequently discussed in planetary-analog literature. COORDINATE PROVENANCE: approximate site coordinates supplied by the project authors from general public knowledge. They could NOT be verified against an authoritative gazetteer from the build environment (Wikidata/GeoNames/USGS GNIS were not reachable). They are labelled 'approximate' throughout the app. Terrain values at these points are real Copernicus DEM measurements; only the name-to-coordinate association is unverified.",
+  "coordinate_status": "approximate_unverified",
+  "sites": [
+    {"id": "earth-haughton", "name": "Haughton impact structure, Devon Island (Canada)", "lat": 75.38, "lon": -89.68, "analog_context": "Polar desert impact structure; HMP Mars analog field site"},
+    {"id": "earth-meteor-crater", "name": "Meteor Crater / Barringer (Arizona, USA)", "lat": 35.027, "lon": -111.022, "analog_context": "Simple impact crater; Apollo-era astronaut training"},
+    {"id": "earth-atacama-yungay", "name": "Atacama Desert, Yungay area (Chile)", "lat": -24.09, "lon": -70.0, "analog_context": "Hyper-arid desert; Mars soil analog"},
+    {"id": "earth-death-valley", "name": "Death Valley, Badwater Basin (California, USA)", "lat": 36.23, "lon": -116.77, "analog_context": "Arid basin, alluvial fans, evaporites"},
+    {"id": "earth-mauna-kea", "name": "Mauna Kea summit area (Hawaii, USA)", "lat": 19.82, "lon": -155.47, "analog_context": "High-altitude volcanic terrain; ISRU field tests"},
+    {"id": "earth-kilauea", "name": "Kilauea summit caldera (Hawaii, USA)", "lat": 19.41, "lon": -155.28, "analog_context": "Basaltic volcanism and lava terrain"},
+    {"id": "earth-craters-of-the-moon", "name": "Craters of the Moon lava field (Idaho, USA)", "lat": 43.42, "lon": -113.52, "analog_context": "Basaltic lava flows; Apollo training and NASA analog studies"},
+    {"id": "earth-mdrs-hanksville", "name": "Mars Desert Research Station area, Hanksville (Utah, USA)", "lat": 38.406, "lon": -110.792, "analog_context": "Sedimentary badlands; Mars habitat analog station"},
+    {"id": "earth-sp-crater", "name": "SP Crater, San Francisco volcanic field (Arizona, USA)", "lat": 35.585, "lon": -111.632, "analog_context": "Cinder cone and lava flow; Desert RATS analog area"},
+    {"id": "earth-amboy", "name": "Amboy Crater lava field (California, USA)", "lat": 34.544, "lon": -115.792, "analog_context": "Cinder cone and basaltic flows in Mojave Desert"},
+    {"id": "earth-askja", "name": "Askja caldera (Iceland)", "lat": 65.05, "lon": -16.75, "analog_context": "Volcanic highland; Apollo geology training 1965/67"},
+    {"id": "earth-dry-valleys", "name": "Wright Valley, McMurdo Dry Valleys (Antarctica)", "lat": -77.52, "lon": 161.8, "analog_context": "Cold polar desert; Mars analog"},
+    {"id": "earth-ries", "name": "Noerdlinger Ries impact structure (Germany)", "lat": 48.88, "lon": 10.55, "analog_context": "Complex impact structure; Apollo 14/17 training"},
+    {"id": "earth-lonar", "name": "Lonar crater (India)", "lat": 19.977, "lon": 76.508, "analog_context": "Impact crater in basalt"},
+    {"id": "earth-gosses-bluff", "name": "Gosses Bluff impact structure (Australia)", "lat": -23.82, "lon": 132.31, "analog_context": "Eroded complex impact structure"},
+    {"id": "earth-wolfe-creek", "name": "Wolfe Creek crater (Australia)", "lat": -19.17, "lon": 127.80, "analog_context": "Well-preserved simple impact crater in desert"},
+    {"id": "earth-rio-tinto", "name": "Rio Tinto (Spain)", "lat": 37.70, "lon": -6.60, "analog_context": "Acidic, iron-rich environment; Mars mineralogy analog"},
+    {"id": "earth-teide", "name": "Teide volcanic complex (Tenerife, Spain)", "lat": 28.27, "lon": -16.64, "analog_context": "Volcanic terrain used for rover testing"},
+    {"id": "earth-timanfaya", "name": "Timanfaya lava field (Lanzarote, Spain)", "lat": 29.0, "lon": -13.78, "analog_context": "Basaltic lava fields; ESA PANGAEA training"},
+    {"id": "earth-haleakala", "name": "Haleakala summit depression (Hawaii, USA)", "lat": 20.71, "lon": -156.21, "analog_context": "Volcanic summit terrain"}
+  ]
+}

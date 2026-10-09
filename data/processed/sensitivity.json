@@ -1,0 +1,100 @@
+{
+  "description": "Agreement between the default ranking and perturbed rankings, over all targets. Spearman rho is computed over every candidate ranked in both runs; top-10 overlap counts shared candidates.",
+  "baseline": {
+    "weights": {
+      "local_relief_m": 1.0,
+      "slope_median_deg": 1.0,
+      "slope_p90_deg": 1.0,
+      "roughness_rms_m": 1.0,
+      "hypsometric_integral": 0.5,
+      "slope_distribution": 1.0
+    },
+    "n_targets": 12,
+    "pool_size": 469
+  },
+  "experiments": [
+    {
+      "name": "Random weight perturbation (each weight x U[0.5, 1.5], 20 draws; medians of per-draw medians)",
+      "median_spearman": 0.9978504836308735,
+      "min_spearman": 0.9925041161703815,
+      "median_top10_overlap": 9.0,
+      "min_top10_overlap": 7.5,
+      "n_targets": 12.0,
+      "targets_without_valid_window": []
+    },
+    {
+      "name": "Drop feature: Local relief",
+      "median_spearman": 0.989219427523,
+      "min_spearman": 0.9387279142450953,
+      "median_top10_overlap": 9.0,
+      "min_top10_overlap": 4,
+      "n_targets": 12,
+      "targets_without_valid_window": []
+    },
+    {
+      "name": "Drop feature: Median slope",
+      "median_spearman": 0.9945428782770596,
+      "min_spearman": 0.9810422871556396,
+      "median_top10_overlap": 8.0,
+      "min_top10_overlap": 5,
+      "n_targets": 12,
+      "targets_without_valid_window": []
+    },
+    {
+      "name": "Drop feature: 90th-percentile slope",
+      "median_spearman": 0.9991701088855789,
+      "min_spearman": 0.9960024780677105,
+      "median_top10_overlap": 9.0,
+      "min_top10_overlap": 6,
+      "n_targets": 12,
+      "targets_without_valid_window": []
+    },
+    {
+      "name": "Drop feature: Short-baseline roughness",
+      "median_spearman": 0.9987378137909793,
+      "min_spearman": 0.9563985211713842,
+      "median_top10_overlap": 9.0,
+      "min_top10_overlap": 7,
+      "n_targets": 12,
+      "targets_without_valid_window": []
+    },
+    {
+      "name": "Drop feature: Hypsometric integral",
+      "median_spearman": 0.9855005586020833,
+      "min_spearman": 0.7988122901412918,
+      "median_top10_overlap": 7.0,
+      "min_top10_overlap": 1,
+      "n_targets": 12,
+      "targets_without_valid_window": []
+    },
+    {
+      "name": "Drop feature: Slope distribution (Wasserstein-1)",
+      "median_spearman": 0.9889795385034837,
+      "min_spearman": 0.9809673512929616,
+      "median_top10_overlap": 8.0,
+      "min_top10_overlap": 6,
+      "n_targets": 12,
+      "targets_without_valid_window": []
+    },
+    {
+      "name": "Coarser grid: 90 m (3x3 block mean of the 30 m windows)",
+      "median_spearman": 0.9833319547962371,
+      "min_spearman": 0.957228706845014,
+      "median_top10_overlap": 6.0,
+      "min_top10_overlap": 4,
+      "n_targets": 11,
+      "targets_without_valid_window": [
+        "mars-meridiani"
+      ]
+    },
+    {
+      "name": "Smaller window: central 6 km x 6 km",
+      "median_spearman": 0.911684516801641,
+      "min_spearman": 0.8427875932844736,
+      "median_top10_overlap": 4.0,
+      "min_top10_overlap": 0,
+      "n_targets": 12,
+      "targets_without_valid_window": []
+    }
+  ]
+}

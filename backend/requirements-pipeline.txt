@@ -1,0 +1,5 @@
+# Data pipeline: acquisition, reprojection, hillshade rendering
+-r requirements.txt
+rasterio==1.5.2
+pyproj==3.8.0
+pillow==12.3.0

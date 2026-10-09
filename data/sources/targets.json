@@ -1,0 +1,21 @@
+{
+  "_comment": "Planetary reference regions. Each entry points at an official STAC item in the USGS Astrogeology analysis-ready-data archive on AWS (s3://astrogeo-ard). Window centres are derived at build time from the item itself; nothing here is a measured value.",
+  "targets": [
+    {"id": "moon-connecting-ridge", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Site01/Site01.json", "name": "Connecting ridge"},
+    {"id": "moon-shackleton-rim", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Site04/Site04.json", "name": "Shackleton rim"},
+    {"id": "moon-peak-near-shackleton", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Site07/Site07.json", "name": "Peak near Shackleton"},
+    {"id": "moon-de-gerlache-rim", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Site11/Site11.json", "name": "de Gerlache rim"},
+    {"id": "moon-leibnitz-beta-plateau", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Site20/Site20.json", "name": "Leibnitz beta plateau"},
+    {"id": "moon-malapert-massif", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Site23/Site23.json", "name": "Malapert massif"},
+    {"id": "moon-nobile-rim-1", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Site06/Site06.json", "name": "Nobile rim 1"},
+    {"id": "moon-haworth", "body": "moon", "stac": "moon/lro/lola/barker_south_pole_dems/Haworth/Haworth.json", "name": "Haworth"},
+    {"id": "mars-jezero", "body": "mars", "stac": "mars/mro/ctx/controlled/usgs/J03_045994_1986_XN_18N282W__J03_046060_1986_XN_18N282W/J03_045994_1986_XN_18N282W__J03_046060_1986_XN_18N282W.json", "name": "Jezero crater region (CTX DTM)",
+     "selection": "CTX DTM whose footprint contains the Mars 2020 Perseverance landing area (approx. 18.44 N, 77.45 E; approximate value from public NASA mission information, used only to choose the DTM) and whose centroid is nearest to it among 29 covering DTMs in the USGS index."},
+    {"id": "mars-gale", "body": "mars", "stac": "mars/mro/ctx/controlled/usgs/D03_028335_1754_XI_04S222W__D03_028269_1752_XI_04S222W/D03_028335_1754_XI_04S222W__D03_028269_1752_XI_04S222W.json", "name": "Gale crater region (CTX DTM)",
+     "selection": "CTX DTM whose footprint contains the MSL Curiosity landing area (approx. 4.59 S, 137.44 E; approximate, used only to choose the DTM) and whose centroid is nearest to it among the 16 covering DTMs that carry a STAC item."},
+    {"id": "mars-meridiani", "body": "mars", "stac": "mars/mro/ctx/controlled/usgs/B05_011765_1780_XN_02S005W__B08_012820_1779_XN_02S005W/B05_011765_1780_XN_02S005W__B08_012820_1779_XN_02S005W.json", "name": "Meridiani Planum (CTX DTM)",
+     "selection": "CTX DTM whose footprint contains the MER Opportunity landing area (approx. 1.95 S, 5.53 W; approximate, used only to choose the DTM) and whose centroid is nearest to it among the 16 covering DTMs that carry a STAC item."},
+    {"id": "mars-utopia-zhurong", "body": "mars", "stac": "mars/mro/ctx/controlled/usgs/N14_067844_2054_XN_25N250W__N13_067580_2051_XN_25N249W/N14_067844_2054_XN_25N250W__N13_067580_2051_XN_25N249W.json", "name": "Southern Utopia Planitia (CTX DTM)",
+     "selection": "CTX DTM whose footprint contains the Tianwen-1 Zhurong landing area (approx. 25.07 N, 109.93 E; approximate, used only to choose the DTM)."}
+  ]
+}
