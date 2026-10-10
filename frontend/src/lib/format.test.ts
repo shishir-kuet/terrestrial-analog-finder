@@ -41,24 +41,34 @@ describe('index colour scale', () => {
   };
 
   it('clamps outside the 0-100 range instead of extrapolating', () => {
-    expect(indexColor(-5)).toBe(indexColor(0));
-    expect(indexColor(150)).toBe(indexColor(100));
-  });
-
-  it('returns a parseable colour at every step', () => {
-    for (let s = 0; s <= 100; s += 5) expect(rgb(indexColor(s))).toHaveLength(3);
-  });
-
-  it('brightens monotonically as similarity rises', () => {
-    // Asserted as a property rather than pinned hex: the ramp is retuned per
-    // surface, but it must stay a monotonic single-hue sequential scale. On
-    // the charcoal page more light means more similarity.
-    for (let s = 5; s <= 100; s += 5) {
-      expect(luminance(indexColor(s))).toBeGreaterThan(luminance(indexColor(s - 5)));
+    for (const mode of ['light', 'dark'] as const) {
+      expect(indexColor(-5, mode)).toBe(indexColor(0, mode));
+      expect(indexColor(150, mode)).toBe(indexColor(100, mode));
     }
   });
 
-  it('keeps both ends distinguishable', () => {
-    expect(luminance(indexColor(100)) - luminance(indexColor(0))).toBeGreaterThan(0.3);
+  it('returns a parseable colour at every step, in both steppings', () => {
+    for (const mode of ['light', 'dark'] as const) {
+      for (let s = 0; s <= 100; s += 5) expect(rgb(indexColor(s, mode))).toHaveLength(3);
+    }
+  });
+
+  it('moves monotonically away from its own surface', () => {
+    // Asserted as a property rather than pinned hex. On paper more similarity
+    // means more ink; on charcoal it means more light. Either way the ramp is
+    // monotonic, so the ordering is never ambiguous.
+    for (let s = 5; s <= 100; s += 5) {
+      expect(luminance(indexColor(s, 'light'))).toBeLessThan(luminance(indexColor(s - 5, 'light')));
+      expect(luminance(indexColor(s, 'dark'))).toBeGreaterThan(luminance(indexColor(s - 5, 'dark')));
+    }
+  });
+
+  it('keeps both ends distinguishable in each stepping', () => {
+    expect(luminance(indexColor(0, 'light')) - luminance(indexColor(100, 'light'))).toBeGreaterThan(0.3);
+    expect(luminance(indexColor(100, 'dark')) - luminance(indexColor(0, 'dark'))).toBeGreaterThan(0.3);
+  });
+
+  it('defaults to the dark stepping, which the result rows and meters use', () => {
+    expect(indexColor(80)).toBe(indexColor(80, 'dark'));
   });
 });

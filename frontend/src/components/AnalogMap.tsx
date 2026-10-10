@@ -5,20 +5,22 @@ import 'leaflet/dist/leaflet.css';
 import type { Candidate, LocationSummary } from '../lib/types';
 import { fmtCoord, indexColor, isValidCoord, KIND_LABEL } from '../lib/format';
 
-// A muted dark basemap, so the markers carry the data and the map recedes.
-// Esri's Dark Gray Canvas serves without an API key; CARTO's equivalent now
-// returns a watermarked "API KEY REQUIRED" tile, so do not go back to it.
+// The map is a light plate inside the charcoal app, like the charts: coastlines
+// and landmasses are far easier to read as geography on paper, and the markers
+// still carry the data. Esri's Light Gray Canvas serves without an API key;
+// CARTO's equivalent now returns a watermarked "API KEY REQUIRED" tile, so do
+// not go back to it.
 const TILE_URL =
   (import.meta.env.VITE_TILE_URL as string | undefined) ??
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
 
-// Marker chrome for the dark basemap. A near-black hairline separates adjacent
-// markers without competing with the similarity fill.
-const STROKE = '#12120f';
-const STROKE_SELECTED = '#5eead4';
-const GRATICULE = '#e8e6df';
-const POOL_FILL = '#55544e';
-const POOL_STROKE = '#7a796f';
+// Marker chrome for the light basemap. A near-black hairline keeps the pale low
+// end of the similarity ramp visible against pale land.
+const STROKE = '#1b1b19';
+const STROKE_SELECTED = '#00564b';
+const GRATICULE = '#8d8b82';
+const POOL_FILL = '#a8a69c';
+const POOL_STROKE = '#6f6e66';
 const TILE_ATTR =
   (import.meta.env.VITE_TILE_ATTRIBUTION as string | undefined) ??
   'Basemap: Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -42,7 +44,7 @@ function Graticule() {
   return (
     <>
       {lines.map((l, i) => (
-        <Polyline key={i} positions={l} pathOptions={{ color: GRATICULE, weight: 1, opacity: 0.35, dashArray: '5 6' }} interactive={false} />
+        <Polyline key={i} positions={l} pathOptions={{ color: GRATICULE, weight: 1, opacity: 0.55, dashArray: '5 6' }} interactive={false} />
       ))}
     </>
   );
@@ -79,7 +81,7 @@ export function Legend({ hasResults }: { hasResults: boolean }) {
       <p className="mb-1 font-semibold text-ink">Legend</p>
       {hasResults ? (
         <>
-          <div className="h-2 w-full rounded" style={{ background: `linear-gradient(to right, ${[0, 40, 60, 75, 90, 100].map(indexColor).join(',')})` }} />
+          <div className="h-2 w-full rounded" style={{ background: `linear-gradient(to right, ${[0, 40, 60, 75, 90, 100].map((v) => indexColor(v, 'light')).join(',')})` }} />
           <div className="flex justify-between text-[10px] text-ink-muted">
             <span>0</span>
             <span>similarity index</span>
@@ -90,7 +92,7 @@ export function Legend({ hasResults }: { hasResults: boolean }) {
         <p className="text-ink-muted">Run a search to colour candidates by similarity.</p>
       )}
       <div className="mt-1.5 hidden space-y-0.5 sm:block">
-        <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-white align-middle" /> named analog site (larger)</p>
+        <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-ink align-middle" /> named analog site (larger)</p>
         <p><span className="mr-1 inline-block h-2 w-2 rounded-full bg-ink-faint align-middle" /> survey grid cell</p>
         <p><span className="mr-1 inline-block h-2 w-2 rounded-full border border-danger align-middle" /> not ranked (missing data)</p>
       </div>
@@ -110,7 +112,7 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
   const sel = ranked.find((r) => r.id === selectedId) ?? null;
 
   return (
-    <div className="relative h-full min-h-[320px] w-full overflow-hidden rounded-lg border border-line shadow-card">
+    <div className="on-light relative h-full min-h-[320px] w-full overflow-hidden rounded-lg border border-line-strong">
       <MapContainer center={[20, 0]} zoom={2} minZoom={1} worldCopyJump className="h-full w-full" aria-label="Map of Earth candidate locations">
         {!tilesFailed && (
           <TileLayer
@@ -149,7 +151,7 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
 
         {showExcluded &&
           (excluded ?? []).filter((r) => isValidCoord(r.lat, r.lon)).map((r) => (
-            <CircleMarker key={r.id} center={[r.lat, r.lon]} radius={4} pathOptions={{ color: '#fb7185', weight: 1.5, fillOpacity: 0, dashArray: '3 3' }}>
+            <CircleMarker key={r.id} center={[r.lat, r.lon]} radius={4} pathOptions={{ color: '#be123c', weight: 1.5, fillOpacity: 0, dashArray: '3 3' }}>
               <Popup>
                 <p className="font-semibold">{r.name}</p>
                 <p className="text-xs text-danger">Not ranked: {r.exclusion_reason}</p>
@@ -165,7 +167,7 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
             pathOptions={{
               color: r.id === selectedId ? STROKE_SELECTED : STROKE,
               weight: r.id === selectedId ? 3 : r.kind === 'earth_named' ? 2 : 1,
-              fillColor: indexColor(r.similarity_index),
+              fillColor: indexColor(r.similarity_index, 'light'),
               fillOpacity: 0.95,
             }}
             eventHandlers={{ click: () => onSelect(r.id) }}

@@ -128,7 +128,7 @@ export function RankingChart({ results, onSelect }: { results: Candidate[]; onSe
           <Tooltip contentStyle={tooltipStyle} />
           <Bar dataKey="s" name="Similarity index" isAnimationActive={false} cursor="pointer" onClick={(d: { id: string }) => onSelect?.(d.id)}>
             {data.map((d) => (
-              <Cell key={d.id} fill={indexColor(d.s)} />
+              <Cell key={d.id} fill={indexColor(d.s, 'light')} />
             ))}
           </Bar>
         </BarChart>
