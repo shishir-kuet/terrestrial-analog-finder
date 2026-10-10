@@ -40,11 +40,11 @@ function MineralBars({ fractions }: { fractions: Record<string, number> }) {
     <ul className="mt-1 space-y-1">
       {top.map(([k, v]) => (
         <li key={k} className="flex items-center gap-2 text-[11px]">
-          <span className="w-36 shrink-0 text-slate-300">{CLASS_LABEL[k] ?? k}</span>
-          <span className="h-2 flex-1 rounded bg-slate-800">
-            <span className="block h-2 rounded bg-sky-500" style={{ width: `${Math.max(2, 100 * v)}%` }} />
+          <span className="w-36 shrink-0 text-ink-muted">{CLASS_LABEL[k] ?? k}</span>
+          <span className="h-2 flex-1 rounded bg-surface-sunken">
+            <span className="block h-2 rounded bg-accent-ink" style={{ width: `${Math.max(2, 100 * v)}%` }} />
           </span>
-          <span className="w-10 text-right font-mono text-slate-400">{(100 * v).toFixed(0)}%</span>
+          <span className="w-10 text-right font-mono text-ink-muted">{(100 * v).toFixed(0)}%</span>
         </li>
       ))}
     </ul>
@@ -62,22 +62,22 @@ export default function EnvironmentPanel({
 
   if (!rows.length && !g2) {
     return (
-      <div className="text-xs text-slate-400">
-        <p className="font-medium text-slate-300">{title}</p>
+      <div className="text-xs text-ink-muted">
+        <p className="font-medium text-ink-muted">{title}</p>
         <p className="mt-1">No thermal or mineral measurement for this window. {missingReason ?? env?.error ?? ''}</p>
       </div>
     );
   }
   return (
     <div className="text-xs">
-      <p className="font-medium text-slate-300">{title}</p>
+      <p className="font-medium text-ink-muted">{title}</p>
       <table className="tbl mt-1 text-[11px]">
         <tbody>
           {rows.map((r) => {
             const v = num(attrs[r.key])!;
             return (
               <tr key={r.key}>
-                <td className="text-slate-400">{r.label}</td>
+                <td className="text-ink-muted">{r.label}</td>
                 <td className="text-right font-mono">
                   {r.percent ? `${(100 * v).toFixed(1)} %` : v.toFixed(r.digits ?? 2)}
                   {r.unit && !r.percent ? ` ${r.unit}` : ''}
@@ -88,13 +88,13 @@ export default function EnvironmentPanel({
         </tbody>
       </table>
       {(g1 || g2) && (
-        <p className="mt-2 text-slate-300">
+        <p className="mt-2 text-ink-muted">
           Dominant mineral identification — iron-bearing group: <b>{CLASS_LABEL[g1 ?? ''] ?? '—'}</b>;
           {' '}clay/carbonate/sulfate group: <b>{CLASS_LABEL[g2 ?? ''] ?? '—'}</b>
         </p>
       )}
       {g2f && <MineralBars fractions={g2f} />}
-      {missingReason && <p className="mt-2 text-slate-500">{missingReason}</p>}
+      {missingReason && <p className="mt-2 text-ink-faint">{missingReason}</p>}
     </div>
   );
 }

@@ -14,8 +14,19 @@ import {
 import type { Candidate, FeatureDef } from '../lib/types';
 import { indexColor, SERIES_COLORS } from '../lib/format';
 
-const axis = { stroke: '#64748b', fontSize: 11 };
-const tooltipStyle = { backgroundColor: '#0f172a', border: '1px solid #334155', fontSize: 12 };
+// Chart chrome, tuned for the light surface: recessive axes and a hairline
+// grid, so the marks carry the ink. Kept in one place rather than per chart.
+const INK_FAINT = '#6b6a63';
+const GRID = '#eceae3';
+const axis = { stroke: INK_FAINT, fontSize: 11 };
+const tooltipStyle = {
+  backgroundColor: '#ffffff',
+  border: '1px solid #cdcac0',
+  borderRadius: 8,
+  fontSize: 12,
+  color: '#1b1b19',
+  boxShadow: '0 4px 8px rgb(16 24 32 / 0.05), 0 16px 40px -12px rgb(16 24 32 / 0.18)',
+};
 
 export interface Series {
   name: string;
@@ -25,7 +36,7 @@ export interface Series {
 /** Slope-frequency distribution (fraction of window area per 1° bin), from computed histograms. */
 export function SlopeDistChart({ series, maxDeg = 45 }: { series: Series[]; maxDeg?: number }) {
   const usable = series.filter((s) => s.values && s.values.length);
-  if (!usable.length) return <p className="text-sm text-slate-400">No slope distribution available.</p>;
+  if (!usable.length) return <p className="text-sm text-ink-muted">No slope distribution available.</p>;
   const data = Array.from({ length: maxDeg }, (_, i) => {
     const row: Record<string, number> = { deg: i + 0.5 };
     usable.forEach((s) => (row[s.name] = +(100 * (s.values as number[])[i]).toFixed(3)));
@@ -35,7 +46,7 @@ export function SlopeDistChart({ series, maxDeg = 45 }: { series: Series[]; maxD
     <div className="h-56" data-testid="slope-chart">
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 5, right: 10, bottom: 18, left: 0 }}>
-          <CartesianGrid stroke="#1e293b" />
+          <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="deg" type="number" domain={[0, maxDeg]} tick={axis} stroke={axis.stroke}
             label={{ value: 'Slope (degrees, Horn method, 30 m grid)', position: 'insideBottom', offset: -10, fill: '#94a3b8', fontSize: 11 }} />
           <YAxis tick={axis} stroke={axis.stroke} unit="%" width={44} />
@@ -53,7 +64,7 @@ export function SlopeDistChart({ series, maxDeg = 45 }: { series: Series[]; maxD
 /** Relative elevation (m above/below the window median) at each 5 % area percentile. */
 export function HypsoChart({ series }: { series: Series[] }) {
   const usable = series.filter((s) => s.values && s.values.length === 21);
-  if (!usable.length) return <p className="text-sm text-slate-400">No elevation distribution available.</p>;
+  if (!usable.length) return <p className="text-sm text-ink-muted">No elevation distribution available.</p>;
   const data = Array.from({ length: 21 }, (_, i) => {
     const row: Record<string, number> = { p: i * 5 };
     usable.forEach((s) => (row[s.name] = (s.values as number[])[i]));
@@ -63,7 +74,7 @@ export function HypsoChart({ series }: { series: Series[] }) {
     <div className="h-56" data-testid="hypso-chart">
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 5, right: 10, bottom: 18, left: 8 }}>
-          <CartesianGrid stroke="#1e293b" />
+          <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="p" type="number" domain={[0, 100]} tick={axis} stroke={axis.stroke}
             label={{ value: 'Percent of window area below this height', position: 'insideBottom', offset: -10, fill: '#94a3b8', fontSize: 11 }} />
           <YAxis tick={axis} stroke={axis.stroke} unit=" m" width={60} />
@@ -89,14 +100,14 @@ export function ContributionChart({ candidate, defs }: { candidate: Candidate; d
     <div className="h-48" data-testid="contribution-chart">
       <ResponsiveContainer>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, bottom: 14, left: 8 }}>
-          <CartesianGrid stroke="#1e293b" horizontal={false} />
+          <CartesianGrid stroke={GRID} horizontal={false} />
           <XAxis type="number" domain={[0, 100]} unit="%" tick={axis} stroke={axis.stroke}
             label={{ value: 'Share of D² (higher = feature drives the mismatch)', position: 'insideBottom', offset: -8, fill: '#94a3b8', fontSize: 11 }} />
           <YAxis type="category" dataKey="name" width={150} tick={axis} stroke={axis.stroke} />
           <Tooltip contentStyle={tooltipStyle} formatter={(v: number, _n, p) => [`${v}%${p.payload.missing ? ' (missing-data penalty)' : ''}`, 'share']} />
           <Bar dataKey="share" isAnimationActive={false}>
             {data.map((d) => (
-              <Cell key={d.name} fill={d.missing ? '#f43f5e' : '#38bdf8'} />
+              <Cell key={d.name} fill={d.missing ? '#be123c' : SERIES_COLORS[0]} />
             ))}
           </Bar>
         </BarChart>

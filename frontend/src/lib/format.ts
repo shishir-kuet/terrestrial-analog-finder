@@ -37,35 +37,43 @@ export const KIND_LABEL: Record<string, string> = {
 export const COORD_STATUS: Record<string, { label: string; tone: string; help: string }> = {
   approximate_unverified: {
     label: 'approximate coordinates',
-    tone: 'bg-amber-500/15 text-amber-300',
+    tone: 'bg-warn-soft text-warn ring-1 ring-inset ring-warn/20',
     help: 'Site coordinates were supplied by the project authors from public knowledge and could not be verified against a gazetteer. Terrain values at this point are real DEM measurements.',
   },
   algorithmic_grid: {
     label: 'grid cell',
-    tone: 'bg-sky-500/15 text-sky-300',
+    tone: 'bg-moon/10 text-moon ring-1 ring-inset ring-moon/20',
     help: 'Coordinates generated on a regular latitude/longitude grid inside a documented survey region.',
   },
   derived_from_source_metadata: {
     label: 'from source metadata',
-    tone: 'bg-emerald-500/15 text-emerald-300',
+    tone: 'bg-earth/10 text-earth ring-1 ring-inset ring-earth/20',
     help: 'Centre taken from the STAC metadata of the source DTM.',
   },
   derived_from_source_metadata_adjusted: {
     label: 'from source metadata (shifted)',
-    tone: 'bg-emerald-500/15 text-emerald-300',
+    tone: 'bg-earth/10 text-earth ring-1 ring-inset ring-earth/20',
     help: 'Centre taken from the STAC metadata of the source DTM, shifted to the nearest fully covered 12 km window.',
   },
 };
 
-/** Sequential colour (dark blue -> cyan -> pale yellow) for a 0-100 similarity index. */
+/**
+ * Sequential colour for a 0-100 similarity index: one hue, light to dark.
+ *
+ * A single teal ramp (not a rainbow) so the scale reads as a quantity on the
+ * light surface, with more ink meaning more similarity. Lightness is
+ * monotonic, so the ordering survives greyscale printing and colour-vision
+ * deficiency. Markers carry a dark hairline stroke, which keeps the pale low
+ * end visible against the basemap.
+ */
 export function indexColor(s: number): string {
   const stops: [number, [number, number, number]][] = [
-    [0, [49, 54, 149]],
-    [40, [69, 117, 180]],
-    [60, [116, 173, 209]],
-    [75, [171, 217, 233]],
-    [90, [254, 224, 144]],
-    [100, [253, 174, 97]],
+    [0, [222, 240, 236]],
+    [40, [168, 216, 207]],
+    [60, [108, 190, 176]],
+    [75, [46, 159, 142]],
+    [90, [0, 125, 106]],
+    [100, [0, 84, 72]],
   ];
   const x = Math.max(0, Math.min(100, s));
   for (let i = 1; i < stops.length; i++) {
@@ -77,7 +85,17 @@ export function indexColor(s: number): string {
       return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
     }
   }
-  return 'rgb(253, 174, 97)';
+  return 'rgb(0, 84, 72)';
 }
 
-export const SERIES_COLORS = ['#f59e0b', '#38bdf8', '#a78bfa', '#34d399', '#f472b6'];
+/**
+ * Categorical series colours, in fixed assignment order: the planetary
+ * reference first, then candidates. Four slots is the maximum the app can
+ * show (one reference plus at most three compared candidates), so the order
+ * is never cycled.
+ *
+ * Validated for the light chart surface with the data-viz palette checker:
+ * lightness band, chroma floor, CVD separation and contrast all pass across
+ * every pair, not just adjacent ones (worst case dE 10.4 protan).
+ */
+export const SERIES_COLORS = ['#009b84', '#eb6834', '#2a78d6', '#5b21b6'];

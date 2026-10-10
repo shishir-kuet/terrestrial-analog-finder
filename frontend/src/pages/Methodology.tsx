@@ -1,22 +1,96 @@
+import type { ReactNode } from 'react';
 import Reveal from '../components/Reveal';
-import { ErrorBox, Loading, PageHeader } from '../components/StateViews';
+import { ErrorBox, Loading } from '../components/StateViews';
 import { api } from '../lib/api';
 import { useScrollProgress, useScrollSpy } from '../lib/useScroll';
 import { useAsync } from '../lib/useAsync';
+import type { Dataset } from '../lib/types';
 
-/** Body tints, matching the landing page so a dataset reads the same everywhere. */
+/** One tint language per planetary body, shared with the rest of the app. */
 const BODY_BADGE: Record<string, string> = {
-  moon: 'bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/30',
-  mars: 'bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/30',
-  earth: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/30',
+  moon: 'bg-moon/10 text-moon ring-1 ring-inset ring-moon/25',
+  mars: 'bg-mars/10 text-mars ring-1 ring-inset ring-mars/25',
+  earth: 'bg-earth/10 text-earth ring-1 ring-inset ring-earth/25',
 };
+/** Card text colour, which `.edge` reads through currentColor. */
+const BODY_EDGE: Record<string, string> = { moon: 'text-moon', mars: 'text-mars', earth: 'text-earth' };
 
-/** Text colour on the card, which `.edge` reads through currentColor. */
-const BODY_EDGE: Record<string, string> = {
-  moon: 'text-sky-400',
-  mars: 'text-orange-400',
-  earth: 'text-emerald-400',
-};
+const SECTIONS: [id: string, label: string][] = [
+  ['datasets', 'Datasets'],
+  ['considered', 'Also considered'],
+  ['method', 'Similarity method'],
+  ['features', 'Features'],
+  ['thermal', 'Thermal & mineral'],
+  ['sensitivity', 'Sensitivity'],
+  ['limitations', 'Limitations'],
+];
+
+const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+/** Section wrapper: heading, optional standfirst, and the reveal on scroll. */
+function Section({ id, title, lead, children }: { id: string; title: string; lead?: ReactNode; children: ReactNode }) {
+  return (
+    <Reveal as="section" id={id} className="scroll-mt-24">
+      <h2 className="h-section">{title}</h2>
+      {lead && <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-ink-muted">{lead}</p>}
+      <div className="mt-3">{children}</div>
+    </Reveal>
+  );
+}
+
+/** Label/value row for a dataset's expanded detail. */
+function Spec({ k, children }: { k: string; children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-x-3 gap-y-0.5 py-1 sm:grid-cols-[9rem_minmax(0,1fr)]">
+      <dt className="text-[11px] uppercase tracking-wide text-ink-faint">{k}</dt>
+      <dd className="min-w-0 break-words text-ink-muted">{children}</dd>
+    </div>
+  );
+}
+
+/** Proportion bar. The number stays the source of truth; this gives it scale. */
+function Bar({ value, title }: { value: number; title: string }) {
+  return (
+    <span className="inline-flex w-full min-w-[4rem] max-w-[7rem] items-center" title={title}>
+      <span className="h-1.5 w-full overflow-hidden rounded-full bg-accent-soft">
+        <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(0, Math.min(100, value * 100))}%` }} />
+      </span>
+    </span>
+  );
+}
+
+function DatasetCard({ x }: { x: Dataset }) {
+  return (
+    <details className={`edge card-flat card-hover group pl-4 ${BODY_EDGE[x.body] ?? 'text-ink-faint'}`}>
+      {/* Collapsed by default: the summary already carries provider, resolution
+          and licence, so eight datasets stay scannable without expanding. */}
+      <summary className="flex items-start gap-2.5">
+        <span className={`badge mt-0.5 shrink-0 ${BODY_BADGE[x.body] ?? 'bg-surface-sunken text-ink-muted'}`}>{x.body}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold leading-snug text-ink">{x.name}</span>
+          <span className="mt-1 block text-xs leading-relaxed text-ink-faint">
+            {x.provider} · {x.spatial_resolution}
+          </span>
+          <span className="mt-1 block text-[11px] text-ink-faint">{x.license}</span>
+        </span>
+        <span aria-hidden className="mt-0.5 shrink-0 text-ink-faint transition-transform duration-200 group-open:rotate-90">›</span>
+      </summary>
+      <dl className="mt-3 divide-y divide-line border-t border-line pt-2 text-sm">
+        <Spec k="Source"><a className="link break-all" href={x.source_url} target="_blank" rel="noreferrer">{x.source_url}</a></Spec>
+        <Spec k="DOI">{x.doi ? <a className="link break-all" href={x.doi} target="_blank" rel="noreferrer">{x.doi}</a> : 'none listed'}</Spec>
+        <Spec k="Citation">{x.citation}</Spec>
+        <Spec k="Variables">{x.variables.join(', ')}</Spec>
+        <Spec k="Units">{x.units}</Spec>
+        <Spec k="Coverage">{x.spatial_coverage}</Spec>
+        <Spec k="Temporal">{x.temporal_coverage}</Spec>
+        <Spec k="CRS">{x.crs}</Spec>
+        <Spec k="Access">{x.authentication} · {x.access_method}</Spec>
+        <Spec k="Preprocessing">{x.preprocessing}</Spec>
+        <Spec k="Limitations">{x.limitations}</Spec>
+      </dl>
+    </details>
+  );
+}
 
 export default function Methodology() {
   const m = useAsync(() => api.methodology(), []);
@@ -24,20 +98,9 @@ export default function Methodology() {
   const f = useAsync(() => api.features(), []);
   const e = useAsync(() => api.environment(), []);
 
-  const sections: [id: string, label: string][] = [
-    ['datasets', 'Datasets'],
-    ['considered', 'Also considered'],
-    ['method', 'Similarity method'],
-    ['features', 'Features'],
-    ['thermal', 'Thermal & mineral'],
-    ['sensitivity', 'Sensitivity'],
-    ['limitations', 'Limitations'],
-  ];
-
-  const active = useScrollSpy(sections.map(([id]) => id));
+  const active = useScrollSpy(SECTIONS.map(([id]) => id), 120);
   const progress = useScrollProgress();
 
-  // Headline figures, read from the same endpoints the sections below render.
   const facts: [value: string, label: string][] = [
     [d.data ? String(d.data.integrated.length) : '—', 'datasets integrated'],
     [d.data ? String(d.data.investigated_not_integrated.length) : '—', 'considered, not used'],
@@ -46,49 +109,57 @@ export default function Methodology() {
     [m.data?.sensitivity ? String(m.data.sensitivity.experiments.length) : '—', 'robustness checks'],
   ];
 
+  const thermalPct = e.data && e.data.earth_windows_ok
+    ? e.data.earth_windows_with_thermal_feature / e.data.earth_windows_ok : 0;
+  const mineralPct = e.data && e.data.earth_windows_ok
+    ? e.data.earth_windows_with_mineral_classes / e.data.earth_windows_ok : 0;
+
   return (
-    <div>
+    <div className="pb-section-lg">
       <div className="progress-rail" aria-hidden>
         <div className="progress-fill" style={{ transform: `scaleX(${progress})` }} />
       </div>
 
-      <PageHeader
-        eyebrow="Reproducible by design"
-        title="Data and methodology"
-        aside={
-          m.data?.manifest?.built_at && (
-            <p className="text-right text-xs text-slate-400">
-              <span className="label block">Data build</span>
-              <span className="num text-slate-200">{String(m.data.manifest.built_at).slice(0, 10)}</span>
-            </p>
-          )
-        }
-      >
-        Everything the ranking depends on, served live from the analysis backend — no figure on this page is typed by hand.
-      </PageHeader>
+      {/* ------------------------------------------------------------ masthead */}
+      <header className="border-b border-line bg-surface">
+        <div className="mx-auto max-w-content px-4 py-7 sm:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
+            <div className="max-w-prose">
+              <p className="label text-accent-ink">Reproducible by design</p>
+              <h1 className="mt-1.5 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Data and methodology</h1>
+              <p className="mt-2 text-base leading-relaxed text-ink-muted">
+                Everything the ranking depends on, served live from the analysis backend. No figure on this page is
+                typed by hand.
+              </p>
+            </div>
+            {m.data?.manifest?.built_at && (
+              <dl className="shrink-0 rounded-lg border border-line bg-surface-raised px-3 py-2">
+                <dt className="label">Data build</dt>
+                <dd className="num mt-0.5 text-sm text-ink">{String(m.data.manifest.built_at).slice(0, 10)}</dd>
+              </dl>
+            )}
+          </div>
 
-      <div className="mx-auto max-w-5xl px-4 pt-4">
-        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {facts.map(([v, l], i) => (
-            <Reveal key={l} delay={i * 50} className="fact">
-              <dd className="fact-n">{v}</dd>
-              <dt className="fact-l">{l}</dt>
-            </Reveal>
-          ))}
-        </dl>
-      </div>
+          <dl className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {facts.map(([v, l], i) => (
+              <Reveal key={l} delay={i * 40} className="fact">
+                <dd className="fact-n">{v}</dd>
+                <dt className="fact-l">{l}</dt>
+              </Reveal>
+            ))}
+          </dl>
+        </div>
+      </header>
 
-      {/* Jump bar: this page is long and people arrive looking for one section. */}
-      <nav aria-label="Sections" className="sticky top-[52px] z-20 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md">
-        <ul className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-2 text-xs">
-          {sections.map(([id, label]) => (
+      {/* Mobile section nav. On desktop this lives in the sticky rail instead. */}
+      <nav aria-label="Sections" className="sticky top-[49px] z-20 border-b border-line bg-base/85 backdrop-blur lg:hidden">
+        <ul className="flex gap-1.5 overflow-x-auto px-4 py-2">
+          {SECTIONS.map(([id, label]) => (
             <li key={id}>
-              {/* A plain `#id` href would overwrite the HashRouter route and
-                  land on "page not found", so scroll the section into view. */}
-              <button
-                aria-current={active === id ? 'true' : undefined}
-                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className={`pill ${active === id ? 'pill-on' : ''}`}>
+              {/* A plain `#id` href would overwrite the HashRouter route and land
+                  on "page not found", so scroll the section into view instead. */}
+              <button aria-current={active === id ? 'true' : undefined}
+                onClick={() => jump(id)} className={`pill ${active === id ? 'pill-on' : ''}`}>
                 {label}
               </button>
             </li>
@@ -96,153 +167,247 @@ export default function Methodology() {
         </ul>
       </nav>
 
-      <div className="mx-auto max-w-5xl space-y-5 p-4">
-
-      <Reveal as="section" id="datasets" className="scroll-mt-28 card space-y-3">
-        <h2 className="h-section mb-3">Datasets integrated</h2>
-        {d.loading && <Loading />}
-        {d.error && <ErrorBox message={d.error} onRetry={d.reload} />}
-        {d.data?.integrated.map((x) => (
-          <details key={x.id}
-            className={`edge group rounded-lg border border-slate-800 bg-slate-950/30 py-3 pl-4 pr-3 transition-all duration-200 hover:border-slate-700 hover:bg-slate-950/60 open:bg-slate-950/60 ${BODY_EDGE[x.body] ?? 'text-slate-600'}`}>
-            {/* Collapsed by default, but the summary already carries provider,
-                resolution and licence so the list is useful without expanding. */}
-            <summary className="cursor-pointer list-none">
-              <span className="flex flex-wrap items-center gap-2">
-                <span className={`badge ${BODY_BADGE[x.body] ?? 'bg-slate-800 text-slate-300'}`}>{x.body}</span>
-                <span className="font-medium text-slate-100 group-hover:text-white">{x.name}</span>
-                <span aria-hidden className="ml-auto text-slate-600 transition-transform duration-200 group-open:rotate-90">›</span>
-              </span>
-              <span className="mt-1.5 block text-xs leading-relaxed text-slate-500">
-                {x.provider} · {x.spatial_resolution} · {x.license}
-              </span>
-            </summary>
-            <dl className="mt-2 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[200px_1fr]">
-              {([
-                ['Provider', x.provider], ['Source', <a key="s" className="link break-all" href={x.source_url} target="_blank" rel="noreferrer">{x.source_url}</a>],
-                ['DOI', x.doi ? <a key="d" className="link" href={x.doi} target="_blank" rel="noreferrer">{x.doi}</a> : 'none listed'],
-                ['Citation / attribution', x.citation], ['Variables', x.variables.join(', ')], ['Units', x.units],
-                ['Spatial resolution', x.spatial_resolution], ['Coverage', x.spatial_coverage], ['Temporal coverage', x.temporal_coverage],
-                ['CRS', x.crs], ['License', x.license], ['Authentication', x.authentication], ['Access method', x.access_method],
-                ['Preprocessing', x.preprocessing], ['Limitations', x.limitations],
-              ] as [string, React.ReactNode][]).map(([k, v]) => (
-                <div key={k} className="contents"><dt className="text-slate-400">{k}</dt><dd className="text-slate-200">{v}</dd></div>
-              ))}
-            </dl>
-          </details>
-        ))}
-      </Reveal>
-
-      <Reveal as="section" id="considered" className="scroll-mt-28 card">
-        <h2 className="h-section">Other sources considered</h2>
-        <p className="mb-2 ml-4 text-sm text-slate-400">Investigated but not integrated in this build, and why.</p>
-        <table className="tbl">
-          <thead><tr><th>Source</th><th>Status</th><th>Would provide</th></tr></thead>
-          <tbody>
-            {d.data?.investigated_not_integrated.map((x) => (
-              <tr key={x.name}><td><a className="link" href={x.url} target="_blank" rel="noreferrer">{x.name}</a></td><td>{x.status}</td><td>{x.would_provide}</td></tr>
+      {/* ------------------------------------------- rail + single reading column */}
+      <div className="mx-auto grid max-w-content gap-x-10 px-4 py-section sm:px-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        <nav aria-label="Sections" className="hidden lg:block">
+          <ul className="sticky top-20 space-y-0.5 border-l border-line">
+            {SECTIONS.map(([id, label]) => (
+              <li key={id}>
+                <button
+                  aria-current={active === id ? 'true' : undefined}
+                  onClick={() => jump(id)}
+                  className={`-ml-px block w-full border-l-2 py-1.5 pl-3 text-left text-sm transition-colors duration-150 ${
+                    active === id
+                      ? 'border-accent font-medium text-ink'
+                      : 'border-transparent text-ink-faint hover:border-line-strong hover:text-ink'
+                  }`}>
+                  {label}
+                </button>
+              </li>
             ))}
-          </tbody>
-        </table>
-      </Reveal>
+          </ul>
+        </nav>
 
-      <Reveal as="section" id="method" className="scroll-mt-28 card space-y-2 text-sm">
-        <h2 className="h-section mb-3">Similarity method</h2>
-        {m.loading && <Loading />}
-        {m.error && <ErrorBox message={m.error} onRetry={m.reload} />}
-        {m.data && (
-          <>
-            <p>{m.data.summary}</p>
-            <p><span className="text-slate-400">Window:</span> {m.data.window.size_m / 1000} km × {m.data.window.size_m / 1000} km, {m.data.window.grid_res_m} m grid, {m.data.window.projection}; windows with &lt; {100 * m.data.window.min_valid_fraction}% valid cells are not scored.</p>
-            <p><span className="text-slate-400">Normalisation:</span> {m.data.normalization}</p>
-            <pre className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-sky-200 shadow-inner">{`d_i = (T_i(candidate) − T_i(reference)) / IQR_i        (scalar features)
-d_i = W1(slope_hist_candidate, slope_hist_reference) / IQR_slope   (distribution)
+        <div className="min-w-0 space-y-section">
+          {/* -------------------------------------------------------- datasets */}
+          <Section id="datasets" title="Datasets integrated"
+            lead="Every archive the build actually reads. Open one for its citation, licence, CRS and preprocessing.">
+            {d.loading && <Loading />}
+            {d.error && <ErrorBox message={d.error} onRetry={d.reload} />}
+            <div className="grid gap-2.5 md:grid-cols-2">
+              {d.data?.integrated.map((x) => <DatasetCard key={x.id} x={x} />)}
+            </div>
+          </Section>
+
+          {/* ------------------------------------------------------ considered */}
+          <Section id="considered" title="Other sources considered"
+            lead="Investigated during the build and deliberately left out, with the reason and what each would have added.">
+            <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+              <table className="tbl">
+                <thead><tr><th className="w-56">Source</th><th className="w-40">Status</th><th>Would provide</th></tr></thead>
+                <tbody>
+                  {d.data?.investigated_not_integrated.map((x) => (
+                    <tr key={x.name}>
+                      <td><a className="link" href={x.url} target="_blank" rel="noreferrer">{x.name}</a></td>
+                      <td className="text-ink-faint">{x.status}</td>
+                      <td>{x.would_provide}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          {/* ---------------------------------------------------------- method */}
+          <Section id="method" title="Similarity method" lead={m.data?.summary}>
+            {m.loading && <Loading />}
+            {m.error && <ErrorBox message={m.error} onRetry={m.reload} />}
+            {m.data && (
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <div className="space-y-3 text-sm leading-relaxed">
+                  <div>
+                    <p className="label mb-1">Window</p>
+                    <p>
+                      {m.data.window.size_m / 1000} km × {m.data.window.size_m / 1000} km on a {m.data.window.grid_res_m} m
+                      grid, {m.data.window.projection}. Windows with under {100 * m.data.window.min_valid_fraction}% valid
+                      cells are not scored.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="label mb-1">Normalisation</p>
+                    <p>{m.data.normalization}</p>
+                  </div>
+                  <div>
+                    <p className="label mb-1">Missing data</p>
+                    <p>{m.data.missing_data_policy}</p>
+                  </div>
+                  <div>
+                    <p className="label mb-1">Weights</p>
+                    <p>{m.data.weights}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <figure>
+                    <figcaption className="label mb-1">The score, in full</figcaption>
+                    <pre className="overflow-x-auto rounded-lg border border-line bg-surface-raised p-3 font-mono text-[11px] leading-relaxed text-ink">
+{`d_i = (T_i(candidate) − T_i(reference)) / IQR_i
+      (scalar features)
+
+d_i = W1(slope_hist_cand, slope_hist_ref) / IQR_slope
+      (distribution feature)
+
 ${m.data.distance}
-${m.data.similarity_index}`}</pre>
-            <p><span className="text-slate-400">Missing data:</span> {m.data.missing_data_policy}</p>
-            <p><span className="text-slate-400">Weights:</span> {m.data.weights}</p>
-            <p className="rounded-lg bg-amber-950/30 p-2 text-amber-100">{m.data.interpretation}</p>
-          </>
-        )}
-      </Reveal>
+${m.data.similarity_index}`}
+                    </pre>
+                  </figure>
+                  <p className="note-warn">{m.data.interpretation}</p>
+                </div>
+              </div>
+            )}
+          </Section>
 
-      <Reveal as="section" id="features" className="card max-h-[75vh] scroll-mt-28 overflow-auto">
-        <h2 className="h-section mb-3">Features</h2>
-        {f.error && <ErrorBox message={f.error} />}
-        <table className="tbl tbl-sticky">
-          <thead><tr><th>Feature</th><th>Meaning</th><th>Method</th><th>Transform · scale (IQR)</th><th>Limitations</th></tr></thead>
-          <tbody>
-            {f.data?.features.map((x) => (
-              <tr key={x.key}>
-                <td className="font-medium text-slate-100">{x.label}<div className="text-[10px] text-slate-500">{x.unit}</div></td>
-                <td>{x.meaning}</td>
-                <td>{x.method}</td>
-                <td className="font-mono text-xs">{x.transform}{x.transform === 'log10' ? `(x+${x.log_offset})` : ''} · {f.data!.scales[x.key]?.toFixed(3)}</td>
-                <td className="text-slate-400">{x.limitations}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Reveal>
+          {/* -------------------------------------------------------- features */}
+          <Section id="features" title="Features"
+            lead="What is measured on every window, how, and the robust scale each difference is divided by.">
+            {f.error && <ErrorBox message={f.error} />}
+            <div className="max-h-[32rem] overflow-auto rounded-lg border border-line bg-surface">
+              <table className="tbl tbl-sticky">
+                <thead>
+                  <tr>
+                    <th className="w-44">Feature</th><th>Meaning</th><th>Method</th>
+                    <th className="w-40">Transform · IQR</th><th>Limitations</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {f.data?.features.map((x) => (
+                    <tr key={x.key}>
+                      <td className="font-medium text-ink">
+                        {x.label}
+                        <span className="mt-0.5 block text-[10px] font-normal text-ink-faint">{x.unit}</span>
+                      </td>
+                      <td>{x.meaning}</td>
+                      <td>{x.method}</td>
+                      <td className="num text-xs">
+                        {x.transform}{x.transform === 'log10' ? `(x+${x.log_offset})` : ''}
+                        <span className="block text-ink-faint">{f.data!.scales[x.key]?.toFixed(3)}</span>
+                      </td>
+                      <td className="text-ink-faint">{x.limitations}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
 
-      <Reveal as="section" id="thermal" className="card scroll-mt-28 space-y-2 text-sm">
-        <h2 className="h-section">Thermal and mineral layer</h2>
-        <p className="mb-2 ml-4 text-sm text-slate-400">
-          Built separately from the terrain layer and merged onto each location, because coverage is uneven by nature.
-        </p>
-        {e.loading && <Loading />}
-        {e.error && <ErrorBox message={e.error} onRetry={e.reload} />}
-        {e.data && (
-          <>
-            <p>
-              Measured for <b>{e.data.earth_windows_with_thermal_feature}</b> of {e.data.earth_windows_ok} complete Earth
-              windows (thermal) and <b>{e.data.earth_windows_with_mineral_classes}</b> (mineral classes); built{' '}
-              {e.data.built_at ?? 'not yet'}.
-            </p>
-            <p>
-              <span className="text-slate-400">Comparable across bodies:</span> {e.data.comparable_features.join(', ') || 'none'}.
-              Its default weight is 0, so the terrain-only ranking is unchanged unless you switch it on.
-            </p>
-            <p className="text-slate-400">{e.data.display_only}</p>
-            <details className="rounded-lg border border-slate-800 p-2">
-              <summary className="cursor-pointer text-xs text-slate-300">Build parameters and percentile references</summary>
-              <pre className="mt-2 overflow-x-auto rounded bg-slate-950 p-2 font-mono text-[11px] text-slate-300">
-                {JSON.stringify({ parameters: e.data.parameters, percentile_reference: e.data.percentile_reference }, null, 1)}
-              </pre>
-            </details>
-          </>
-        )}
-      </Reveal>
+          {/* --------------------------------------------------------- thermal */}
+          <Section id="thermal" title="Thermal and mineral layer"
+            lead="Built separately from the terrain layer and merged onto each location, because coverage is uneven by nature.">
+            {e.loading && <Loading />}
+            {e.error && <ErrorBox message={e.error} onRetry={e.reload} />}
+            {e.data && (
+              <div className="space-y-4">
+                {/* Coverage is the thing people get wrong about this layer, so
+                    show it as a proportion rather than burying it in a sentence. */}
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {([
+                    ['Thermal measurement', e.data.earth_windows_with_thermal_feature, thermalPct],
+                    ['Mineral classes', e.data.earth_windows_with_mineral_classes, mineralPct],
+                  ] as [string, number, number][]).map(([label, n, pct]) => (
+                    <div key={label} className="card-flat">
+                      <p className="label">{label}</p>
+                      <p className="mt-1 flex items-baseline gap-1.5">
+                        <span className="num text-2xl font-semibold text-ink">{n}</span>
+                        <span className="text-sm text-ink-faint">of {e.data!.earth_windows_ok} Earth windows</span>
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Bar value={pct} title={`${(100 * pct).toFixed(0)}% coverage`} />
+                        <span className="num text-xs text-ink-faint">{(100 * pct).toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-      {m.data?.sensitivity && (
-        <Reveal as="section" id="sensitivity" className="card scroll-mt-28 text-sm">
-          <h2 className="h-section">Sensitivity analysis</h2>
-          <p className="mb-2 ml-4 text-sm text-slate-400">{m.data.sensitivity.description}</p>
-          <table className="tbl">
-            <thead><tr><th>Perturbation</th><th>Median Spearman ρ vs baseline</th><th>Median top-10 overlap</th><th>Targets</th></tr></thead>
-            <tbody>
-              {m.data.sensitivity.experiments.map((e: { name: string; median_spearman: number; median_top10_overlap: number; n_targets: number }) => (
-                <tr key={e.name}><td>{e.name}</td><td className="font-mono">{e.median_spearman.toFixed(3)}</td><td className="font-mono">{e.median_top10_overlap.toFixed(1)} / 10</td><td>{e.n_targets}</td></tr>
+                <div className="max-w-prose space-y-2 text-sm leading-relaxed">
+                  <p>
+                    <span className="font-medium text-ink">Comparable across bodies:</span>{' '}
+                    {e.data.comparable_features.join(', ') || 'none'}. Its default weight is 0, so the terrain-only
+                    ranking is unchanged unless you switch it on.
+                  </p>
+                  <p className="text-ink-faint">{e.data.display_only}</p>
+                </div>
+
+                <details className="card-flat text-sm">
+                  <summary className="flex items-center gap-2 text-xs font-medium text-ink-muted hover:text-ink">
+                    <span aria-hidden className="text-ink-faint">›</span>
+                    Build parameters and percentile references
+                  </summary>
+                  <pre className="mt-2 max-h-72 overflow-auto rounded border border-line bg-surface-raised p-2 font-mono text-[11px] leading-relaxed text-ink-muted">
+                    {JSON.stringify({ parameters: e.data.parameters, percentile_reference: e.data.percentile_reference }, null, 1)}
+                  </pre>
+                </details>
+              </div>
+            )}
+          </Section>
+
+          {/* ----------------------------------------------------- sensitivity */}
+          {m.data?.sensitivity && (
+            <Section id="sensitivity" title="Sensitivity analysis" lead={m.data.sensitivity.description}>
+              <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Perturbation</th>
+                      <th className="w-52">Spearman ρ vs baseline</th>
+                      <th className="w-32">Top-10 overlap</th>
+                      <th className="w-20">Targets</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {m.data.sensitivity.experiments.map(
+                      (x: { name: string; median_spearman: number; median_top10_overlap: number; n_targets: number }) => (
+                        <tr key={x.name}>
+                          <td className="text-ink">{x.name}</td>
+                          <td>
+                            <span className="flex items-center gap-2">
+                              <Bar value={x.median_spearman} title={`rho ${x.median_spearman.toFixed(3)}`} />
+                              <span className="num text-xs text-ink">{x.median_spearman.toFixed(3)}</span>
+                            </span>
+                          </td>
+                          <td className="num text-xs">{x.median_top10_overlap.toFixed(1)} / 10</td>
+                          <td className="num text-xs">{x.n_targets}</td>
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Section>
+          )}
+
+          {/* ----------------------------------------------------- limitations */}
+          <Section id="limitations" title="Scientific limitations"
+            lead="What this ranking does not tell you. None of these are hidden elsewhere in the app.">
+            <ol className="grid gap-2.5 md:grid-cols-2">
+              {[
+                'The default ranking compares terrain geometry only. Thermophysical character enters only through the thermal-inertia percentile, which is off by default; atmosphere, gravity, radiation, illumination and regolith depth are never represented.',
+                "The thermal-inertia percentile compares ranks, not physical values: Earth's apparent thermal inertia (K⁻¹, from ECOSTRESS and VIIRS) and Mars' TES thermal inertia (tiu) are different quantities, and matching their within-body percentiles assumes the two distributions correspond. Earth percentiles are relative to this app's arid/volcanic/polar pool, not to Earth as a whole, and the Moon has no thermal-inertia product in the archives reachable here.",
+                'EMIT mineral identifications are per-pixel spectral-library matches grouped into classes by this project, available only where EMIT has flown; they have no planetary counterpart in this build, so they are shown but never scored.',
+                'All features are scale-dependent; results apply to 12 km windows on a 30 m grid only.',
+                'Earth heights come from a surface model (vegetation, buildings, ice surfaces included); lunar and Martian DTMs are bare-surface products with their own interpolation and stereo noise. Short-baseline roughness is the most affected feature.',
+                'Planetary targets are limited to products in the USGS analysis-ready archive: 8 lunar south-polar sites and 4 Martian CTX DTM windows.',
+                'Named analog site coordinates are approximate and unverified; survey cells are a coarse, regionally limited grid, not a global search.',
+                'Robust scales depend on the Earth reference pool, so indices are only comparable within one data build and configuration.',
+                'The similarity index is not a probability and says nothing about landing safety, habitability or mission suitability.',
+              ].map((text, i) => (
+                <li key={i} className="card-flat flex gap-2.5 text-sm leading-relaxed">
+                  <span aria-hidden className="num shrink-0 text-xs font-semibold text-ink-faint">{String(i + 1).padStart(2, '0')}</span>
+                  <span>{text}</span>
+                </li>
               ))}
-            </tbody>
-          </table>
-        </Reveal>
-      )}
-
-      <Reveal as="section" id="limitations" className="card scroll-mt-28 text-sm">
-        <h2 className="h-section mb-3">Scientific limitations</h2>
-        <ul className="space-y-2 text-slate-300 [&>li]:rounded-lg [&>li]:border [&>li]:border-slate-800/70 [&>li]:bg-slate-950/40 [&>li]:p-2.5 [&>li]:transition-colors [&>li]:duration-150 [&>li:hover]:border-slate-700 [&>li:hover]:bg-slate-900/60">
-          <li>The default ranking compares terrain geometry only. Thermophysical character enters only through the thermal-inertia percentile, which is off by default; atmosphere, gravity, radiation, illumination and regolith depth are never represented.</li>
-          <li>The thermal-inertia percentile compares ranks, not physical values: Earth's apparent thermal inertia (K⁻¹, from ECOSTRESS and VIIRS) and Mars' TES thermal inertia (tiu) are different quantities, and matching their within-body percentiles assumes the two distributions correspond. Earth percentiles are relative to this app's arid/volcanic/polar pool, not to Earth as a whole, and the Moon has no thermal-inertia product in the archives reachable here.</li>
-          <li>EMIT mineral identifications are per-pixel spectral-library matches grouped into classes by this project, available only where EMIT has flown; they have no planetary counterpart in this build, so they are shown but never scored.</li>
-          <li>All features are scale-dependent; results apply to 12 km windows on a 30 m grid only.</li>
-          <li>Earth heights come from a surface model (vegetation, buildings, ice surfaces included); lunar and Martian DTMs are bare-surface products with their own interpolation and stereo noise. Short-baseline roughness is the most affected feature.</li>
-          <li>Planetary targets are limited to products in the USGS analysis-ready archive: 8 lunar south-polar sites and 4 Martian CTX DTM windows.</li>
-          <li>Named analog site coordinates are approximate and unverified; survey cells are a coarse, regionally limited grid, not a global search.</li>
-          <li>Robust scales depend on the Earth reference pool, so indices are only comparable within one data build and configuration.</li>
-          <li>The similarity index is not a probability and says nothing about landing safety, habitability or mission suitability.</li>
-        </ul>
-      </Reveal>
+            </ol>
+          </Section>
+        </div>
       </div>
     </div>
   );

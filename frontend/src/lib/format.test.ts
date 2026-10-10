@@ -29,10 +29,35 @@ describe('value formatting', () => {
 });
 
 describe('index colour scale', () => {
-  it('is defined across and beyond the range', () => {
-    expect(indexColor(0)).toBe('rgb(49, 54, 149)');
-    expect(indexColor(100)).toBe('rgb(253, 174, 97)');
+  const rgb = (s: string) => (s.match(/\d+/g) ?? []).map(Number);
+  // Relative luminance, the quantity that has to move monotonically for a
+  // sequential ramp to survive greyscale printing and colour-vision deficiency.
+  const luminance = (s: string) => {
+    const [r, g, b] = rgb(s).map((v) => {
+      const c = v / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+
+  it('clamps outside the 0-100 range instead of extrapolating', () => {
     expect(indexColor(-5)).toBe(indexColor(0));
     expect(indexColor(150)).toBe(indexColor(100));
+  });
+
+  it('returns a parseable colour at every step', () => {
+    for (let s = 0; s <= 100; s += 5) expect(rgb(indexColor(s))).toHaveLength(3);
+  });
+
+  it('darkens monotonically as similarity rises', () => {
+    // Asserted as a property rather than pinned hex: the ramp may be retuned
+    // for a theme, but more similarity must always mean more ink.
+    for (let s = 5; s <= 100; s += 5) {
+      expect(luminance(indexColor(s))).toBeLessThan(luminance(indexColor(s - 5)));
+    }
+  });
+
+  it('keeps both ends distinguishable', () => {
+    expect(luminance(indexColor(0)) - luminance(indexColor(100))).toBeGreaterThan(0.3);
   });
 });

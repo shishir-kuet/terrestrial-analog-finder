@@ -17,19 +17,24 @@ const SPOTLIGHT_FEATURES: [key: string, label: string][] = [
 ];
 
 const BODY_STYLE: Record<string, { label: string; tone: string; glow: string }> = {
-  moon: { label: 'Moon', tone: 'bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/30', glow: 'from-sky-500/20' },
-  mars: { label: 'Mars', tone: 'bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/30', glow: 'from-orange-500/20' },
+  moon: { label: 'Moon', tone: 'bg-moon/10 text-moon ring-1 ring-inset ring-moon/25', glow: 'from-moon/10' },
+  mars: { label: 'Mars', tone: 'bg-mars/10 text-mars ring-1 ring-inset ring-mars/25', glow: 'from-mars/10' },
 };
 
-/** Ambient backdrop: two slowly drifting glows behind the hero. Decorative only. */
+/** Ambient backdrop: two soft washes and a faint graticule. Decorative only. */
 function HeroBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="drift absolute -left-24 -top-32 h-[28rem] w-[28rem] rounded-full bg-sky-500/10 blur-3xl" />
-      <div className="drift absolute -right-32 top-10 h-[32rem] w-[32rem] rounded-full bg-orange-500/[0.07] blur-3xl"
-        style={{ animationDelay: '-11s' }} />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.07),transparent_60%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+      <div className="absolute -left-32 -top-40 h-[30rem] w-[30rem] rounded-full bg-accent/[0.07] blur-3xl" />
+      <div className="absolute -right-32 top-4 h-[34rem] w-[34rem] rounded-full bg-mars/[0.05] blur-3xl" />
+      {/* A faint graticule: planetary, and it reads as measurement rather than decoration. */}
+      <div className="absolute inset-0 opacity-[0.55]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgb(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, rgb(var(--border)) 1px, transparent 1px)',
+          backgroundSize: '72px 72px',
+          maskImage: 'radial-gradient(60rem 32rem at 40% 10%, #000 20%, transparent 75%)',
+        }} />
     </div>
   );
 }
@@ -38,14 +43,14 @@ function HeroBackdrop() {
 function ServerStatus({ loading, error, locations, builtAt }: {
   loading: boolean; error: string | null; locations?: number; builtAt?: string;
 }) {
-  const tone = loading ? 'bg-slate-500' : error ? 'bg-rose-400' : 'bg-emerald-400';
+  const tone = loading ? 'bg-ink-faint' : error ? 'bg-danger' : 'bg-earth';
   const text = loading
     ? 'Contacting analysis server…'
     : error
       ? `Analysis server unavailable — ${error}`
       : `Analysis server online · ${locations} locations · data built ${builtAt?.slice(0, 10)}`;
   return (
-    <p className="flex items-center gap-2 text-xs text-slate-500" aria-live="polite">
+    <p className="flex items-center gap-2 text-xs text-ink-faint" aria-live="polite">
       <span className={`live-dot ${tone}`} />
       {text}
     </p>
@@ -79,7 +84,7 @@ function TargetSpotlight({ targets, defs }: { targets: Target[]; defs: Record<st
 
   if (!targets.length) return null;
   const t = targets[i % targets.length];
-  const body = BODY_STYLE[t.body] ?? { label: t.body, tone: 'bg-slate-700 text-slate-300', glow: 'from-slate-500/20' };
+  const body = BODY_STYLE[t.body] ?? { label: t.body, tone: 'bg-surface-sunken text-ink-muted', glow: 'from-ink-faint/10' };
 
   const analyse = () => {
     if (t.body === 'moon' || t.body === 'mars') setBody(t.body);
@@ -96,7 +101,7 @@ function TargetSpotlight({ targets, defs }: { targets: Target[]; defs: Record<st
       onBlurCapture={() => setHeld(false)}
     >
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${body.glow} to-transparent`} />
-      <div className="relative aspect-[16/10] w-full bg-slate-950">
+      <div className="relative aspect-[16/10] w-full bg-base">
         {t.hillshade ? (
           <img
             key={t.id}
@@ -106,24 +111,24 @@ function TargetSpotlight({ targets, defs }: { targets: Target[]; defs: Record<st
             loading="eager"
           />
         ) : (
-          <div className="grid h-full place-items-center text-xs text-slate-600">no hillshade render</div>
+          <div className="grid h-full place-items-center text-xs text-ink-faint">no hillshade render</div>
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         <span className={`badge absolute left-3 top-3 ${body.tone}`}>{body.label}</span>
       </div>
 
       <div className="relative -mt-10 space-y-3 p-4">
         <div>
           <p className="label">Planetary reference site</p>
-          <h2 className="text-lg font-semibold text-white">{t.name}</h2>
-          <p className="font-mono text-xs text-slate-400">{fmtCoord(t.lat, t.lon)}</p>
+          <h2 className="text-lg font-semibold text-ink">{t.name}</h2>
+          <p className="font-mono text-xs text-ink-muted">{fmtCoord(t.lat, t.lon)}</p>
         </div>
 
         <dl className="grid grid-cols-3 gap-2">
           {SPOTLIGHT_FEATURES.map(([key, label]) => (
-            <div key={key} className="rounded-lg bg-slate-950/60 px-2 py-1.5">
-              <dt className="text-[11px] text-slate-500">{label}</dt>
-              <dd className="text-sm font-semibold text-slate-100">
+            <div key={key} className="rounded-lg bg-surface-raised px-2 py-1.5">
+              <dt className="text-[11px] text-ink-faint">{label}</dt>
+              <dd className="text-sm font-semibold text-ink">
                 {fmtValue(t.features?.[key], defs[key])}
               </dd>
             </div>
@@ -141,7 +146,7 @@ function TargetSpotlight({ targets, defs }: { targets: Target[]; defs: Record<st
                 aria-label={x.name}
                 title={x.name}
                 onClick={() => setI(n)}
-                className={`h-1.5 rounded-full transition-all ${n === i ? 'w-5 bg-sky-400' : 'w-1.5 bg-slate-700 hover:bg-slate-500'}`}
+                className={`h-1.5 rounded-full transition-all ${n === i ? 'w-5 bg-accent-ink' : 'w-1.5 bg-surface-sunken hover:bg-ink-faint'}`}
               />
             ))}
           </div>
@@ -159,10 +164,10 @@ function Stat({ label, value, note, loading }: { label: string; value: string; n
   return (
     <div className="card card-hover">
       <p className="label">{label}</p>
-      <p className="mt-1 text-3xl font-semibold text-white">
-        {loading ? <span className="inline-block h-8 w-16 animate-pulse rounded bg-slate-800 align-middle" /> : value}
+      <p className="mt-1 text-3xl font-semibold text-ink">
+        {loading ? <span className="inline-block h-8 w-16 animate-pulse rounded bg-surface-sunken align-middle" /> : value}
       </p>
-      <p className="mt-1 text-xs text-slate-400">{note}</p>
+      <p className="mt-1 text-xs text-ink-muted">{note}</p>
     </div>
   );
 }
@@ -198,21 +203,21 @@ export default function Home() {
   return (
     <div className="pb-16">
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative isolate border-b border-slate-800/80">
+      <section className="relative isolate border-b border-line">
         <HeroBackdrop />
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 lg:grid-cols-[1.15fr_1fr] lg:py-20">
           <div className="rise space-y-5">
-            <p className="label inline-flex items-center gap-2 rounded-full bg-sky-500/10 px-3 py-1 text-sky-300 ring-1 ring-inset ring-sky-500/20">
+            <p className="label inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-accent-ink ring-1 ring-inset ring-accent/25">
               NASA Space Apps Challenge 2026
             </p>
             <h1 className="text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-              <span className="headline-gradient">Where on Earth</span>
+              <span className="text-accent-ink">Where on Earth</span>
               <br />
-              <span className="text-white">looks like the Moon?</span>
+              <span className="text-ink">looks like the Moon?</span>
             </h1>
-            <p className="max-w-xl text-lg leading-relaxed text-slate-300">
+            <p className="max-w-xl text-lg leading-relaxed text-ink-muted">
               Terrestrial Analog Finder ranks real places on Earth by how closely their{' '}
-              <em className="not-italic text-slate-100">measured terrain</em> matches lunar south-polar sites and
+              <em className="not-italic text-ink">measured terrain</em> matches lunar south-polar sites and
               well-studied regions of Mars — and shows you, feature by feature, exactly why each one ranks where it does.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -229,7 +234,7 @@ export default function Home() {
 
           <div className="rise" style={{ animationDelay: '120ms' }}>
             {targets.loading ? (
-              <div className="card aspect-[16/13] animate-pulse bg-slate-900/70" />
+              <div className="card aspect-[16/13] animate-pulse bg-surface" />
             ) : (
               <TargetSpotlight targets={ts} defs={featureDefs} />
             )}
@@ -270,20 +275,20 @@ export default function Home() {
       {/* ------------------------------------------------------------ how */}
       <Reveal as="section" className="mx-auto max-w-6xl px-4 py-6">
         <h2 className="h-section">How the ranking works</h2>
-        <p className="mt-1 max-w-2xl text-slate-400">
+        <p className="mt-1 max-w-2xl text-ink-muted">
           Three steps, no hidden model. Every number on the results page traces back to a measurement you can inspect.
         </p>
         <ol className="mt-6 grid gap-4 md:grid-cols-3">
           {STEPS.map(([title, body, foot], n) => (
             <li key={title} className="card card-hover relative overflow-hidden">
-              <span aria-hidden className="absolute -right-3 -top-5 font-mono text-7xl font-bold text-slate-100/[0.04]">
+              <span aria-hidden className="absolute -right-3 -top-5 font-mono text-7xl font-bold text-ink/[0.04]">
                 {n + 1}
               </span>
               <div className="relative">
-                <p className="label text-sky-300">Step {n + 1}</p>
-                <h3 className="mt-1 font-semibold text-white">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-300">{body}</p>
-                <p className="mt-3 border-t border-slate-800 pt-2 text-xs text-slate-500">{foot}</p>
+                <p className="label text-accent-ink">Step {n + 1}</p>
+                <h3 className="mt-1 font-semibold text-ink">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{body}</p>
+                <p className="mt-3 border-t border-line pt-2 text-xs text-ink-faint">{foot}</p>
               </div>
             </li>
           ))}
@@ -294,33 +299,33 @@ export default function Home() {
       <Reveal as="section" className="mx-auto max-w-6xl px-4 py-10">
         <div className="card">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-xl font-semibold text-white">What actually gets compared</h2>
+            <h2 className="text-xl font-semibold text-ink">What actually gets compared</h2>
             <Link to="/methodology" className="link text-sm">Full definitions →</Link>
           </div>
-          <p className="mt-1 max-w-3xl text-sm text-slate-400">
+          <p className="mt-1 max-w-3xl text-sm text-ink-muted">
             12 km × 12 km windows resampled to a common 30 m grid, so a lunar window and an Earth window are measured
             the same way before anything is compared.
           </p>
           <ul className="mt-4 flex flex-wrap gap-2" aria-label="Features used in scoring">
             {feats.loading
               ? Array.from({ length: 6 }, (_, k) => (
-                  <li key={k} className="h-7 w-32 animate-pulse rounded-full bg-slate-800" />
+                  <li key={k} className="h-7 w-32 animate-pulse rounded-full bg-surface-sunken" />
                 ))
               : scored.map((f) => (
                   <li
                     key={f.key}
                     title={f.meaning}
-                    className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-sm text-slate-200"
+                    className="rounded-full border border-line bg-surface-raised px-3 py-1 text-sm text-ink"
                   >
                     {f.label}
                     {f.unit && f.unit !== 'dimensionless' && (
-                      <span className="ml-1.5 text-xs text-slate-500">{f.unit}</span>
+                      <span className="ml-1.5 text-xs text-ink-faint">{f.unit}</span>
                     )}
                   </li>
                 ))}
           </ul>
           {env.data && (
-            <p className="mt-4 border-t border-slate-800 pt-3 text-xs text-slate-500">
+            <p className="mt-4 border-t border-line pt-3 text-xs text-ink-faint">
               A separate thermal and mineral layer (ECOSTRESS, VIIRS, EMIT, TES and Diviner) is attached to each
               location — {env.data.earth_windows_with_thermal_feature} Earth windows carry a thermal measurement and{' '}
               {env.data.earth_windows_with_mineral_classes} carry mineral classes. Only{' '}
@@ -340,13 +345,13 @@ export default function Home() {
               <p className="label">{b === 'earth' ? 'Earth' : BODY_STYLE[b].label}</p>
               <ul className="mt-2 space-y-2">
                 {datasets.loading
-                  ? [0, 1].map((k) => <li key={k} className="h-4 animate-pulse rounded bg-slate-800" />)
+                  ? [0, 1].map((k) => <li key={k} className="h-4 animate-pulse rounded bg-surface-sunken" />)
                   : (byBody[b] ?? []).map((d) => (
-                      <li key={d.id} className="text-sm leading-snug text-slate-300">
+                      <li key={d.id} className="text-sm leading-snug text-ink-muted">
                         <a href={d.source_url} target="_blank" rel="noreferrer noopener" className="link">
                           {d.name}
                         </a>
-                        <span className="block text-xs text-slate-500">{d.spatial_resolution}</span>
+                        <span className="block text-xs text-ink-faint">{d.spatial_resolution}</span>
                       </li>
                     ))}
               </ul>
@@ -357,7 +362,7 @@ export default function Home() {
 
       {/* ------------------------------------------------------ disclaimer */}
       <section className="mx-auto max-w-6xl px-4 py-6">
-        <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-sm text-amber-100/90">
+        <div className="rounded-xl border border-warn/25 bg-warn-soft p-4 text-sm text-warn">
           <p className="font-semibold">Scientific disclaimer</p>
           <p className="mt-1 leading-relaxed">
             A high similarity index means similar terrain statistics at the 12 km / 30 m scale, nothing more. It is not

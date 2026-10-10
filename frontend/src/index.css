@@ -2,18 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   Design tokens
+
+   A light, warm-neutral scientific interface: paper-white surfaces on an
+   off-white page, near-black text, one teal accent, amber reserved for
+   caveats. Colours are stored as raw channels so Tailwind can apply its own
+   alpha (see tailwind.config.js).
+
+   Text colours were checked against both surfaces: ink 17:1, ink-muted 7.5:1,
+   ink-faint 4.5:1, accent-ink 6.6:1, amber-ink 5.0:1. `--accent` itself is
+   3.5:1, so it is used for marks, fills and large type, never body text.
+   =========================================================================== */
 :root {
-  color-scheme: dark;
-  /* One accent, declared once, so the whole app shifts together. */
-  --accent: 56 189 248;      /* sky-400  */
-  --accent-warm: 251 146 60; /* orange-400 */
+  color-scheme: light;
+
+  --bg: 247 246 243;            /* warm off-white page            */
+  --surface: 255 255 255;       /* card / panel                   */
+  --surface-2: 251 250 247;     /* ivory, for insets              */
+  --surface-3: 241 240 236;     /* filled wells, table stripes    */
+
+  --border: 227 225 218;
+  --border-strong: 205 202 192;
+
+  --ink: 27 27 25;              /* headings, primary text         */
+  --ink-2: 86 85 78;            /* body, secondary                */
+  --ink-3: 107 106 99;          /* captions, metadata             */
+
+  --accent: 0 155 132;          /* teal: marks and fills          */
+  --accent-ink: 0 105 92;       /* teal: text and links           */
+  --accent-soft: 228 245 242;
+
+  --amber-ink: 180 83 9;
+  --amber-soft: 254 246 234;
+  --rose-ink: 190 18 60;
+
+  /* Planetary body tints. One language across badges, card edges and legends. */
+  --body-moon: 42 120 214;      /* blue   */
+  --body-mars: 199 79 34;       /* rust   */
+  --body-earth: 0 125 106;      /* teal   */
 }
 
-body { @apply bg-slate-950 text-slate-200 antialiased; }
+html { scroll-behavior: smooth; }
 
-/* Depth without noise: two fixed, very low-opacity glows plus a hairline grid.
-   Fixed means it does not scroll, so long pages keep one continuous backdrop
-   instead of repeating a texture. */
+body {
+  @apply bg-base text-ink-muted antialiased;
+  font-feature-settings: 'cv05' 1, 'ss01' 1;
+}
+
+/* A single hairline wash at the top of the page. Enough to stop the off-white
+   reading as a blank sheet; not enough to compete with content. */
 body::before {
   content: '';
   position: fixed;
@@ -21,189 +59,145 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at 12% -8%, rgb(var(--accent) / 0.10), transparent 60%),
-    radial-gradient(52rem 36rem at 95% 4%, rgb(var(--accent-warm) / 0.06), transparent 62%),
-    linear-gradient(to bottom, #0b1120 0%, #020617 55%);
+    radial-gradient(70rem 28rem at 15% -6%, rgb(var(--accent) / 0.055), transparent 65%),
+    radial-gradient(56rem 24rem at 92% -2%, rgb(var(--amber-ink) / 0.035), transparent 68%);
 }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image:
-    linear-gradient(to right, rgb(148 163 184 / 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(148 163 184 / 0.045) 1px, transparent 1px);
-  background-size: 64px 64px;
-  /* Fade the grid out down the page so it reads as atmosphere, not a wireframe. */
-  mask-image: radial-gradient(90rem 60rem at 50% -10%, #000 25%, transparent 78%);
-}
-.leaflet-container { background: #0b1220; font: inherit; }
-.leaflet-popup-content-wrapper, .leaflet-popup-tip { @apply bg-slate-900 text-slate-100; }
-.leaflet-control-attribution { @apply !bg-slate-900/80 !text-slate-400; }
-.leaflet-control-attribution a { @apply !text-sky-300; }
+::selection { background: rgb(var(--accent) / 0.18); }
+
+/* --------------------------------------------------------------- typography */
+h1, h2, h3, h4 { @apply text-ink; text-wrap: balance; }
+p { text-wrap: pretty; }
+
+/* ------------------------------------------------------------------ leaflet */
+.leaflet-container { background: rgb(var(--surface-3)); font: inherit; }
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip { @apply bg-surface text-ink shadow-raised; }
+.leaflet-control-attribution { @apply !bg-surface/90 !text-ink-faint; }
+.leaflet-control-attribution a { @apply !text-accent-ink; }
+.leaflet-bar a { @apply !bg-surface !text-ink !border-line; }
+.leaflet-bar a:hover { @apply !bg-surface-sunken; }
 
 @layer components {
-  .card { @apply rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 backdrop-blur-sm; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-primary { @apply btn bg-sky-500 text-slate-950 hover:bg-sky-400; }
-  .btn-ghost { @apply btn border border-slate-700 text-slate-200 hover:bg-slate-800; }
-  .label { @apply text-xs font-semibold uppercase tracking-wide text-slate-400; }
-  .badge { @apply inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium; }
-  .link { @apply text-sky-300 underline-offset-2 hover:underline; }
-  .tbl { @apply w-full text-left text-sm; }
-  .tbl th { @apply border-b border-slate-800 px-2 py-1.5 text-xs font-semibold text-slate-400; }
-  .tbl td { @apply border-b border-slate-800/60 px-2 py-1.5 align-top; }
-}
+  /* ------------------------------------------------------------ surfaces */
+  .card { @apply rounded-lg border border-line bg-surface p-4 shadow-card; }
+  .card-flat { @apply rounded-lg border border-line bg-surface p-4; }
+  .card-hover { @apply transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-px hover:border-line-strong hover:shadow-raised; }
+  .well { @apply rounded-lg border border-line bg-surface-raised p-3; }
 
-/* ---------------------------------------------------------------- motion
-   Entrance and ambient motion for the landing page. Everything here is
-   decorative, so it all collapses to a no-op under prefers-reduced-motion:
-   the page must read identically with motion off. */
-@keyframes taf-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-@keyframes taf-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes taf-drift {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50%      { transform: translate3d(3%, -4%, 0) scale(1.08); }
-}
-@keyframes taf-sweep { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
-@keyframes taf-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  /* -------------------------------------------------------------- buttons */
+  .btn { @apply inline-flex select-none items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150 focus:outline-none disabled:cursor-not-allowed disabled:opacity-45; }
+  .btn-primary { @apply btn bg-accent-ink text-white hover:bg-ink; }
+  .btn-ghost { @apply btn border border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-sunken; }
+  .btn-quiet { @apply btn text-ink-muted hover:bg-surface-sunken hover:text-ink; }
 
-@layer components {
-  .rise { animation: taf-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .fade { animation: taf-fade 0.8s ease-out both; }
-  .drift { animation: taf-drift 22s ease-in-out infinite; }
-  .live-dot { @apply inline-block h-1.5 w-1.5 shrink-0 rounded-full; animation: taf-pulse 2.4s ease-in-out infinite; }
-
-  /* Gradient wordmark for the one display heading on the site. */
-  .headline-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(100deg, #e2e8f0 0%, #7dd3fc 38%, #fbbf24 62%, #e2e8f0 100%);
-    background-size: 200% 100%;
-    animation: taf-sweep 14s linear infinite alternate;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rise, .fade, .drift, .live-dot, .headline-gradient { animation: none !important; }
-  .rise, .fade { opacity: 1 !important; transform: none !important; }
-}
-
-/* ------------------------------------------------------- surfaces & depth
-   The app is one dark surface, so hierarchy has to come from hairlines and a
-   little light rather than from boxes. */
-@layer components {
-  /* An inset top highlight reads as a lit edge without adding a pseudo-element
-     that could stack over card content. */
-  .card { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05); }
-
-  /* A card that responds to the pointer: results, datasets, credits, tiles. */
-  .card-hover { @apply transition-[transform,border-color,box-shadow,background-color] duration-200 hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-900 hover:shadow-xl hover:shadow-slate-950/60; }
-
-  /* Section heading with a short accent rule, so long pages stay scannable. */
-  .rule-left { @apply border-l-2 border-sky-500/70 pl-3; }
-
-  /* Key/value tile for the headline numbers on a detail panel. */
-  .metric { @apply rounded-lg bg-slate-950/60 px-3 py-2 transition-colors duration-200 hover:bg-slate-900/80; }
-
-  /* Monospace numerals that must line up in a column. */
+  /* ---------------------------------------------------------------- text */
+  .label { @apply text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-faint; }
+  .link { @apply text-accent-ink underline decoration-accent/35 underline-offset-2 transition-colors duration-150 hover:decoration-accent-ink; }
   .num { @apply font-mono tabular-nums; }
 
-  /* Sticky header for a table that scrolls inside its own box. Opt-in: on a
-     page-scrolled table the header would stick under the sticky nav instead. */
-  .tbl-sticky thead th { @apply sticky top-0 z-10 bg-slate-900/95 backdrop-blur; }
+  /* Section heading: a short accent rule does the work a heavier weight
+     would, and marks where each section begins on a long page. */
+  .h-section { @apply flex items-center gap-2.5 text-lg font-semibold tracking-tight text-ink; }
+  .h-section::before { content: ''; @apply h-4 w-[3px] shrink-0 rounded-full bg-accent; }
+
+  /* --------------------------------------------------------------- chips */
+  .badge { @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-2 py-1 text-xs text-ink-muted; }
+  .pill { @apply whitespace-nowrap rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-ink-muted transition-colors duration-150 hover:border-line-strong hover:text-ink; }
+  .pill-on { @apply border-accent-ink bg-accent-ink text-white hover:border-accent-ink hover:text-white; }
+
+  /* --------------------------------------------------------------- tables */
+  .tbl { @apply w-full border-collapse text-left text-sm; }
+  .tbl th { @apply border-b border-line px-2.5 py-2 text-xs font-semibold uppercase tracking-wide text-ink-faint; }
+  .tbl td { @apply border-b border-line/70 px-2.5 py-2 align-top text-ink-muted; }
+  .tbl tbody tr { @apply transition-colors duration-100; }
+  .tbl tbody tr:hover { @apply bg-surface-raised; }
+  .tbl-sticky thead th { @apply sticky top-0 z-10 bg-surface; }
+
+  /* ----------------------------------------------------------- stat tiles */
+  .fact { @apply rounded-lg border border-line bg-surface px-3 py-2.5 transition-colors duration-150 hover:border-line-strong; }
+  .fact-n { @apply text-2xl font-semibold leading-none text-ink; }
+  .fact-l { @apply mt-1.5 block text-[11px] leading-tight text-ink-faint; }
+
+  /* Left edge tinting a card by planetary body (colour comes from the
+     element's own `color`, so one rule serves every body). */
+  .edge { @apply relative overflow-hidden; }
+  .edge::before { content: ''; @apply absolute inset-y-0 left-0 w-[3px] transition-all duration-150; background: currentColor; }
+  .edge:hover::before { @apply w-1; }
+
+  /* Callout for a caveat that must not be skimmed past. */
+  .note-warn { @apply rounded-lg border border-warn/25 bg-warn-soft p-3 text-sm text-warn; }
 }
 
-/* Tables: a row highlight makes wide rows readable across. */
-.tbl tbody tr { @apply transition-colors duration-150; }
-.tbl tbody tr:hover { @apply bg-slate-800/40; }
+/* ------------------------------------------------------------ disclosures */
+details > summary { @apply cursor-pointer transition-colors duration-150; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary { list-style: none; }
 
-/* Disclosure rows feel clickable. */
-details > summary { @apply transition-colors duration-150; }
-details > summary:hover { @apply text-white; }
-details > summary::marker { @apply text-slate-600; }
-
-/* One visible focus treatment for everything keyboard-reachable. The ring
-   follows each element's own radius, so pills and dots stay round. */
-:where(a, button, summary, input, select, [tabindex]):focus-visible {
-  @apply outline-none ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-950;
+/* ------------------------------------------------------- focus visibility */
+:where(a, button, summary, input, select, textarea, [tabindex]):focus-visible {
+  @apply outline-none ring-2 ring-accent-ink ring-offset-2 ring-offset-base;
 }
 
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.link { @apply transition-colors duration-150 hover:text-sky-200; }
+/* --------------------------------------------------------------- controls */
+input[type='range'] { @apply h-1 w-full cursor-pointer appearance-none rounded-full bg-surface-sunken; }
+input[type='range']::-webkit-slider-thumb {
+  @apply h-4 w-4 appearance-none rounded-full border-2 border-white bg-accent-ink transition-transform duration-150;
+  box-shadow: 0 1px 3px rgb(16 24 32 / 0.25);
+}
+input[type='range']:hover::-webkit-slider-thumb { transform: scale(1.15); }
+input[type='range']:disabled { @apply cursor-not-allowed opacity-40; }
+input[type='range']:disabled::-webkit-slider-thumb { @apply bg-ink-faint; }
 
-/* Images that reward a closer look. */
-.zoomable { @apply overflow-hidden; }
-.zoomable img { @apply transition-transform duration-500 ease-out; }
-.zoomable:hover img { transform: scale(1.06); }
+input[type='checkbox'] { @apply h-4 w-4 shrink-0 cursor-pointer rounded border-line-strong bg-surface text-accent-ink; accent-color: rgb(var(--accent-ink)); }
 
-/* Scrollbars, so the long result and log panes don't look unfinished. */
-* { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+select,
+input[type='number'],
+input[type='text'] {
+  @apply rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-ink transition-colors duration-150 hover:border-line-strong;
+}
+
+/* ------------------------------------------------------------- scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--border-strong)) transparent; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #27354b; border: 3px solid transparent; background-clip: content-box; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #3c4d69; background-clip: content-box; }
+::-webkit-scrollbar-thumb { background: rgb(var(--border-strong)); border: 3px solid transparent; background-clip: content-box; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--ink-3)); background-clip: content-box; }
 
-input[type='range'] { @apply h-1.5 cursor-pointer appearance-none rounded-full bg-slate-800; }
-input[type='range']::-webkit-slider-thumb { @apply h-4 w-4 appearance-none rounded-full bg-sky-400 transition-transform duration-150; }
-input[type='range']:hover::-webkit-slider-thumb { transform: scale(1.2); }
-input[type='range']:disabled { @apply cursor-not-allowed opacity-40; }
-input[type='checkbox'] { @apply h-4 w-4 cursor-pointer rounded border-slate-600 bg-slate-900 accent-sky-500; }
-select, input[type='number'] { @apply transition-colors duration-150 hover:border-slate-600; }
+/* ------------------------------------------------------------ hillshades
+   Renders are greyscale and were authored to sit on a dark page; on paper
+   they need a frame and a touch more contrast to read as data, not decor. */
+.zoomable { @apply overflow-hidden; }
+.zoomable img { @apply transition-transform duration-500 ease-out; filter: contrast(1.06) brightness(1.02); }
+.zoomable:hover img { transform: scale(1.05); }
 
-@media (prefers-reduced-motion: reduce) {
-  .card-hover:hover, .btn:active:not(:disabled) { transform: none !important; }
-  .zoomable:hover img { transform: none !important; }
-}
+/* -------------------------------------------------------------- animation */
+@keyframes taf-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes taf-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes taf-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-/* ------------------------------------------------------ scroll choreography
-   Sections lift in as they are reached, so a long document reads as it is
-   travelled rather than arriving as one static slab. Transition, not keyframe
-   animation, so the reduced-motion override below is a true no-op. */
+.rise { animation: taf-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.fade { animation: taf-fade 0.5s ease-out both; }
+.live-dot { @apply inline-block h-1.5 w-1.5 shrink-0 rounded-full; animation: taf-pulse 2.4s ease-in-out infinite; }
+
+/* Reveal-on-scroll. A transition rather than a keyframe animation, so the
+   reduced-motion override below is a true no-op. */
 .reveal {
   opacity: 0;
-  transform: translate3d(0, 18px, 0);
-  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal-in { opacity: 1; transform: none; }
 
-/* Reading-position bar, pinned under the nav. */
+/* Reading-position bar. */
 .progress-rail { @apply fixed inset-x-0 top-0 z-[1200] h-0.5 bg-transparent; }
-.progress-fill {
-  @apply h-full origin-left;
-  background: linear-gradient(90deg, rgb(var(--accent)), rgb(var(--accent-warm)));
-  transition: transform 0.1s linear;
-}
-
-@layer components {
-  /* Section heading: a glowing accent bar earns attention that a bold weight
-     alone does not, and it marks where each section starts on a long page. */
-  .h-section { @apply flex items-center gap-3 text-xl font-semibold tracking-tight text-white sm:text-2xl; }
-  .h-section::before {
-    content: '';
-    @apply h-6 w-1 shrink-0 rounded-full;
-    background: linear-gradient(to bottom, rgb(var(--accent)), rgb(var(--accent) / 0.2));
-    box-shadow: 0 0 12px rgb(var(--accent) / 0.5);
-  }
-
-  /* In-page nav pill, with an is-current state for the scroll spy. */
-  .pill { @apply whitespace-nowrap rounded-full border border-slate-800 bg-slate-900/40 px-3 py-1 text-slate-400 transition-all duration-200 hover:border-slate-600 hover:text-slate-100; }
-  .pill-on { @apply border-sky-500/50 bg-sky-500/10 text-sky-300 shadow-[0_0_16px_rgb(56_189_248_/_0.15)]; }
-
-  /* Figure + caption, for the small fact strips under a page header. */
-  .fact { @apply rounded-xl border border-slate-800/70 bg-slate-900/40 px-3 py-2 backdrop-blur-sm transition-colors duration-200 hover:border-slate-700 hover:bg-slate-900/70; }
-  .fact-n { @apply text-2xl font-semibold leading-none text-white; }
-  .fact-l { @apply mt-1 block text-[11px] leading-tight text-slate-500; }
-
-  /* Left edge that tints a card by planetary body. */
-  .edge { @apply relative overflow-hidden; }
-  .edge::before { content: ''; @apply absolute inset-y-0 left-0 w-0.5 transition-all duration-200; background: currentColor; opacity: 0.45; }
-  .edge:hover::before { @apply w-1; opacity: 1; }
-}
+.progress-fill { @apply h-full origin-left bg-accent; transition: transform 0.1s linear; }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .rise, .fade, .live-dot { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .zoomable:hover img, .card-hover:hover { transform: none !important; }
   .progress-fill { transition: none !important; }
 }
