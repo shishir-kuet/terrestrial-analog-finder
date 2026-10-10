@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from functools import cached_property
 from pathlib import Path
@@ -17,6 +18,23 @@ class DataUnavailable(RuntimeError):
     pass
 
 
+def _json_safe(obj):
+    """Replace non-finite floats with None, recursively.
+
+    ``json.loads`` accepts the non-standard ``NaN``/``Infinity`` literals that
+    numpy-derived builds can emit, but ``json.dumps`` refuses to write them, so
+    a single bad value in the data build would turn a whole endpoint into a 500.
+    A missing measurement is what None already means everywhere in this API.
+    """
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_json_safe(v) for v in obj]
+    return obj
+
+
 class Store:
     def __init__(self, data_dir: Path | None = None):
         self.data_dir = Path(data_dir or os.environ.get("TAF_DATA_DIR") or DEFAULT_DATA_DIR)
@@ -26,7 +44,7 @@ class Store:
     def _read(self, path: Path) -> dict:
         if not path.exists():
             raise DataUnavailable(f"{path.relative_to(self.data_dir)} is missing; run the data pipeline (see README)")
-        return json.loads(path.read_text())
+        return _json_safe(json.loads(path.read_text()))
 
     @cached_property
     def environment(self) -> dict:
@@ -36,7 +54,7 @@ class Store:
         without this layer, and a partial environmental build is usable.
         """
         p = self.processed / "environment.json"
-        return json.loads(p.read_text()) if p.exists() else {"locations": {}, "parameters": {}, "counts": {}}
+        return _json_safe(json.loads(p.read_text())) if p.exists() else {"locations": {}, "parameters": {}, "counts": {}}
 
     @cached_property
     def locations(self) -> dict[str, dict]:
@@ -79,7 +97,7 @@ class Store:
     @cached_property
     def sensitivity(self) -> dict | None:
         p = self.processed / "sensitivity.json"
-        return json.loads(p.read_text()) if p.exists() else None
+        return _json_safe(json.loads(p.read_text())) if p.exists() else None
 
     @property
     def targets(self) -> list[dict]:

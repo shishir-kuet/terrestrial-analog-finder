@@ -416,7 +416,9 @@ def emit_mineral_window(lat: float, lon: float, dst_crs: CRS, cache: Path) -> tu
                   if identified.any() else np.zeros(len(MINERAL_CLASSES), int))
         total = int(counts.sum())
         fractions = {c: round(float(counts[i]) / total, 4) for i, c in enumerate(MINERAL_CLASSES) if counts[i]} if total else {}
-        p = np.asarray(list(fractions.values()), dtype="float64")
+        # Shannon entropy from the unrounded fractions: a class holding fewer than
+        # 0.005 % of the pixels rounds to 0.0 above, and 0 * log(0) is NaN.
+        p = counts[counts > 0] / total if total else np.zeros(0)
         shannon = float(-(p * np.log(p)).sum()) if p.size else 0.0
         out[f"mineral_group{n}_identified_area_fraction"] = round(float(identified.sum()) / float(covered.sum()), 4)
         out[f"mineral_group{n}_class_fractions"] = fractions

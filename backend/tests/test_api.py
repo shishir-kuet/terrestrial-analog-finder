@@ -171,3 +171,27 @@ def test_search_reports_candidate_coverage_per_feature(client):
 def test_location_features_include_the_environmental_block(client):
     r = client.get("/api/locations/mars-jezero/features").json()
     assert "environment" in r and "thermal_inertia_percentile" in r["environment_note"]
+
+
+def test_no_endpoint_emits_non_finite_floats(client):
+    """Every payload must be standard JSON.
+
+    ``json.loads`` accepts the non-standard ``NaN``/``Infinity`` literals a
+    numpy-derived data build can write, but ``json.dumps`` refuses them, so one
+    stray value used to turn a whole endpoint into a 500. The Store scrubs them
+    to None on load; this checks the scrub covers every route.
+    """
+    paths = ["/api/health", "/api/datasets", "/api/features", "/api/environment", "/api/targets",
+             "/api/earth-candidates", "/api/regions", "/api/methodology"]
+    for p in paths:
+        r = client.get(p)
+        assert r.status_code == 200, p
+        assert "NaN" not in r.text and "Infinity" not in r.text, p
+    assert search(client).status_code == 200
+
+
+def test_store_scrubs_non_finite_values():
+    from app.store import _json_safe
+
+    assert _json_safe({"a": math.nan, "b": [math.inf, -math.inf, 1.5], "c": "NaN"}) == {
+        "a": None, "b": [None, None, 1.5], "c": "NaN"}
