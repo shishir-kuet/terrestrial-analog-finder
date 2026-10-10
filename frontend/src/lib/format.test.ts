@@ -49,15 +49,16 @@ describe('index colour scale', () => {
     for (let s = 0; s <= 100; s += 5) expect(rgb(indexColor(s))).toHaveLength(3);
   });
 
-  it('darkens monotonically as similarity rises', () => {
-    // Asserted as a property rather than pinned hex: the ramp may be retuned
-    // for a theme, but more similarity must always mean more ink.
+  it('brightens monotonically as similarity rises', () => {
+    // Asserted as a property rather than pinned hex: the ramp is retuned per
+    // surface, but it must stay a monotonic single-hue sequential scale. On
+    // the charcoal page more light means more similarity.
     for (let s = 5; s <= 100; s += 5) {
-      expect(luminance(indexColor(s))).toBeLessThan(luminance(indexColor(s - 5)));
+      expect(luminance(indexColor(s))).toBeGreaterThan(luminance(indexColor(s - 5)));
     }
   });
 
   it('keeps both ends distinguishable', () => {
-    expect(luminance(indexColor(0)) - luminance(indexColor(100))).toBeGreaterThan(0.3);
+    expect(luminance(indexColor(100)) - luminance(indexColor(0))).toBeGreaterThan(0.3);
   });
 });

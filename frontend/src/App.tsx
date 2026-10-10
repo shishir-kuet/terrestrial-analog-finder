@@ -18,7 +18,7 @@ function Nav() {
     ['/about', 'About'],
   ];
   return (
-    <header className="on-dark sticky top-0 z-[1100] border-b border-line/80 bg-base/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-[1100] border-b border-line/80 bg-base/90 backdrop-blur-xl">
       <div className="flex items-center justify-between px-4 py-2.5">
         <NavLink to="/" className="group flex items-center gap-2 font-semibold text-ink">
           <span aria-hidden
@@ -60,7 +60,7 @@ function Nav() {
  */
 function Footer() {
   return (
-    <footer className="on-dark mt-16 border-t border-line">
+    <footer className="mt-16 border-t border-line bg-surface">
       <div className="mx-auto flex max-w-content flex-col gap-4 px-4 py-8 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div className="max-w-prose">
           <p className="flex items-center gap-2 text-sm font-semibold text-ink">

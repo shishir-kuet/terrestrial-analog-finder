@@ -58,22 +58,22 @@ export const COORD_STATUS: Record<string, { label: string; tone: string; help: s
 };
 
 /**
- * Sequential colour for a 0-100 similarity index: one hue, light to dark.
+ * Sequential colour for a 0-100 similarity index: one hue, dark to light.
  *
- * A single teal ramp (not a rainbow) so the scale reads as a quantity on the
- * light surface, with more ink meaning more similarity. Lightness is
+ * A single teal ramp (not a rainbow), running dark at 0 to bright at 100 so
+ * that on the charcoal page more light means more similarity. Lightness is
  * monotonic, so the ordering survives greyscale printing and colour-vision
- * deficiency. Markers carry a dark hairline stroke, which keeps the pale low
- * end visible against the basemap.
+ * deficiency. Markers carry a near-black hairline, which separates neighbours
+ * without competing with the fill.
  */
 export function indexColor(s: number): string {
   const stops: [number, [number, number, number]][] = [
-    [0, [222, 240, 236]],
-    [40, [168, 216, 207]],
-    [60, [108, 190, 176]],
-    [75, [46, 159, 142]],
-    [90, [0, 125, 106]],
-    [100, [0, 84, 72]],
+    [0, [18, 48, 45]],
+    [40, [16, 86, 78]],
+    [60, [13, 125, 112]],
+    [75, [23, 164, 146]],
+    [90, [45, 212, 191]],
+    [100, [148, 243, 227]],
   ];
   const x = Math.max(0, Math.min(100, s));
   for (let i = 1; i < stops.length; i++) {
@@ -85,7 +85,7 @@ export function indexColor(s: number): string {
       return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
     }
   }
-  return 'rgb(0, 84, 72)';
+  return 'rgb(148, 243, 227)';
 }
 
 /**
@@ -96,6 +96,9 @@ export function indexColor(s: number): string {
  *
  * Validated for the light chart surface with the data-viz palette checker:
  * lightness band, chroma floor, CVD separation and contrast all pass across
- * every pair, not just adjacent ones (worst case dE 10.4 protan).
+ * every pair, not just adjacent ones (worst case dE 10.4 protan). Charts keep
+ * a paper plate on the charcoal page precisely so these four stay separable —
+ * on the dark surface the worst pair collapses to dE 1.6. See `.on-light` in
+ * index.css.
  */
 export const SERIES_COLORS = ['#009b84', '#eb6834', '#2a78d6', '#5b21b6'];

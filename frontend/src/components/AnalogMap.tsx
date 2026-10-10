@@ -6,18 +6,19 @@ import type { Candidate, LocationSummary } from '../lib/types';
 import { fmtCoord, indexColor, isValidCoord, KIND_LABEL } from '../lib/format';
 
 // A muted basemap: the markers carry the data, so the map underneath should
-// recede. Still OpenStreetMap data, rendered in CARTO's light style.
+// recede. Still OpenStreetMap data, rendered in CARTO's dark style to sit on
+// the charcoal page.
 const TILE_URL =
   (import.meta.env.VITE_TILE_URL as string | undefined) ??
-  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
-// Marker chrome for the light basemap. A dark hairline keeps the pale low end
-// of the similarity ramp visible against pale land.
-const STROKE = '#1b1b19';
-const STROKE_SELECTED = '#00564b';
-const GRATICULE = '#cdcac0';
-const POOL_FILL = '#a8a69c';
-const POOL_STROKE = '#86857c';
+// Marker chrome for the dark basemap. A near-black hairline separates adjacent
+// markers without competing with the similarity fill.
+const STROKE = '#12120f';
+const STROKE_SELECTED = '#5eead4';
+const GRATICULE = '#3a3933';
+const POOL_FILL = '#55544e';
+const POOL_STROKE = '#7a796f';
 const TILE_ATTR =
   (import.meta.env.VITE_TILE_ATTRIBUTION as string | undefined) ??
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
@@ -148,7 +149,7 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
 
         {showExcluded &&
           (excluded ?? []).filter((r) => isValidCoord(r.lat, r.lon)).map((r) => (
-            <CircleMarker key={r.id} center={[r.lat, r.lon]} radius={4} pathOptions={{ color: '#be123c', weight: 1.5, fillOpacity: 0, dashArray: '3 3' }}>
+            <CircleMarker key={r.id} center={[r.lat, r.lon]} radius={4} pathOptions={{ color: '#fb7185', weight: 1.5, fillOpacity: 0, dashArray: '3 3' }}>
               <Popup>
                 <p className="font-semibold">{r.name}</p>
                 <p className="text-xs text-danger">Not ranked: {r.exclusion_reason}</p>

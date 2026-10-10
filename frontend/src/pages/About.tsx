@@ -45,7 +45,7 @@ export default function About() {
   return (
     <div className="pb-section-lg">
       {/* ------------------------------------------------------------ masthead */}
-      <header className="on-dark border-b border-line">
+      <header className="border-b border-line bg-surface">
         <div className="mx-auto max-w-content px-4 py-section sm:px-6">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-end">
             <div className="max-w-prose">
