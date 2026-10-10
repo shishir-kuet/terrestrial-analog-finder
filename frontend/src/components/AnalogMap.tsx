@@ -26,7 +26,15 @@ const TILE_URL =
 const STROKE = '#1b1b19';
 const STROKE_SELECTED = '#00564b';
 const GRATICULE = '#8d8b82';
-const POOL_FILL = '#3f3e38';
+// Three categories, three hues, validated as a categorical set on this
+// basemap: every pair clears the CVD floor (worst dE 12.4 deutan, 19.2 normal)
+// and each clears 3:1 against the land. Teal is deliberately not among them —
+// it is the similarity ramp, and would collide in the legend once a search
+// runs. Colour is never the only cue: named sites are larger, and unranked
+// ones are dashed and unfilled.
+const MARKER_NAMED = '#2a78d6';     // blue
+const MARKER_SURVEY = '#5b21b6';    // violet
+const MARKER_EXCLUDED = '#be123c';  // rose, the reserved status hue
 const POOL_HALO = '#ffffff';
 const TILE_ATTR =
   (import.meta.env.VITE_TILE_ATTRIBUTION as string | undefined) ??
@@ -83,30 +91,40 @@ function FlyToSelected({ pos }: { pos: [number, number] | null }) {
 }
 
 export function Legend({ hasResults }: { hasResults: boolean }) {
+  /* The map colours markers by category before a search and by similarity
+     after one, so the key has to say which is on screen rather than show both. */
+  const dot = (fill: string, size: string, ring = POOL_HALO) => (
+    <span aria-hidden className={`mr-1.5 inline-block ${size} shrink-0 rounded-full align-middle`}
+      style={{ background: fill, boxShadow: `0 0 0 1.5px ${ring}, 0 0 0 2.5px rgb(0 0 0 / 0.18)` }} />
+  );
   return (
-    <div className="pointer-events-auto absolute bottom-3 left-3 z-[1000] w-44 sm:w-56 rounded-lg border border-line bg-surface p-2.5 text-xs text-ink-muted shadow-lg" aria-label="Map legend">
-      <p className="mb-1 font-semibold text-ink">Legend</p>
+    <div className="pointer-events-auto absolute bottom-3 left-3 z-[1000] w-44 rounded-lg border border-line-strong bg-surface p-2.5 text-xs text-ink-muted shadow-raised sm:w-56" aria-label="Map legend">
+      <p className="mb-1.5 font-semibold text-ink">Legend</p>
       {hasResults ? (
         <>
           <div className="h-2 w-full rounded" style={{ background: `linear-gradient(to right, ${[0, 40, 60, 75, 90, 100].map((v) => indexColor(v, 'light')).join(',')})` }} />
-          <div className="flex justify-between text-[10px] text-ink-muted">
-            <span>0</span>
-            <span>similarity index</span>
-            <span>100</span>
+          <div className="mt-0.5 flex justify-between text-[10px] text-ink-faint">
+            <span>0</span><span>similarity index</span><span>100</span>
           </div>
+          <p className="mt-1.5 hidden text-[11px] leading-snug sm:block">
+            Ranked markers are filled by index; named analog sites are drawn larger than survey cells.
+          </p>
         </>
       ) : (
-        <p className="text-ink-muted">Run a search to colour candidates by similarity.</p>
+        <div className="hidden space-y-1 sm:block">
+          <p className="flex items-center">{dot(MARKER_NAMED, 'h-3 w-3')} named analog site</p>
+          <p className="flex items-center">{dot(MARKER_SURVEY, 'h-2.5 w-2.5')} survey grid cell</p>
+        </div>
       )}
-      <div className="mt-1.5 hidden space-y-0.5 sm:block">
-        <p><span className="mr-1 inline-block h-3 w-3 rounded-full border-2 border-white bg-ink align-middle" /> named analog site (larger)</p>
-        <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border border-white bg-ink align-middle" /> survey grid cell</p>
-        <p><span className="mr-1 inline-block h-2 w-2 rounded-full border border-danger align-middle" /> not ranked (missing data)</p>
-      </div>
-      <p className="mt-1.5 hidden text-[10px] text-ink-faint sm:block">Markers mark the centre of a 12 km × 12 km analysis window.</p>
+      <p className="mt-1 hidden items-center sm:flex">
+        <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-dashed align-middle" style={{ borderColor: MARKER_EXCLUDED }} />
+        not ranked (missing data)
+      </p>
+      <p className="mt-1.5 hidden text-[10px] leading-snug text-ink-faint sm:block">Markers mark the centre of a 12 km × 12 km analysis window.</p>
     </div>
   );
 }
+
 
 export default function AnalogMap({ pool, results, excluded, selectedId, onSelect, showExcluded }: Props) {
   const [tileState, setTileState] = useState({ loaded: 0, errors: 0 });
@@ -142,9 +160,11 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
               center={[p.lat, p.lon]}
               radius={p.kind === 'earth_named' ? 6.5 : 4}
               pathOptions={{
-                color: p.status === 'ok' ? POOL_HALO : POOL_FILL,
+                color: p.status === 'ok' ? POOL_HALO : MARKER_EXCLUDED,
                 weight: p.kind === 'earth_named' ? 2 : 1.5,
-                fillColor: p.status === 'ok' ? POOL_FILL : 'transparent',
+                fillColor: p.status === 'ok'
+                  ? (p.kind === 'earth_named' ? MARKER_NAMED : MARKER_SURVEY)
+                  : 'transparent',
                 fillOpacity: 0.95,
               }}
             >
@@ -158,7 +178,7 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
 
         {showExcluded &&
           (excluded ?? []).filter((r) => isValidCoord(r.lat, r.lon)).map((r) => (
-            <CircleMarker key={r.id} center={[r.lat, r.lon]} radius={4} pathOptions={{ color: '#be123c', weight: 1.5, fillOpacity: 0, dashArray: '3 3' }}>
+            <CircleMarker key={r.id} center={[r.lat, r.lon]} radius={4} pathOptions={{ color: MARKER_EXCLUDED, weight: 1.5, fillOpacity: 0, dashArray: '3 3' }}>
               <Popup>
                 <p className="font-semibold">{r.name}</p>
                 <p className="text-xs text-danger">Not ranked: {r.exclusion_reason}</p>
