@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { api, hillshadeUrl } from '../lib/api';
-import { fmtCoord, fmtValue, KIND_LABEL } from '../lib/format';
+import { fmtCoord, fmtValue, indexColor, KIND_LABEL } from '../lib/format';
 import type { Candidate, Dataset, FeatureDef, SearchResponse } from '../lib/types';
 import { useAsync } from '../lib/useAsync';
 import { ContributionChart, HypsoChart, SlopeDistChart } from './Charts';
 import EnvironmentPanel from './Environment';
-import { CoordBadge, ErrorBox, Loading, SectionTitle } from './StateViews';
+import { CoordBadge, ErrorBox, IndexMeter, Loading, SectionTitle } from './StateViews';
 
 interface Props {
   candidate: Candidate;
@@ -19,10 +19,12 @@ interface Props {
 
 export function Hillshade({ id, label }: { id: string; label: string }) {
   return (
-    <figure className="text-center">
-      <img src={hillshadeUrl(id)} alt={`Hillshade of ${label}`} className="aspect-square w-full rounded-md border border-slate-800 bg-slate-800 object-cover" loading="lazy"
-        onError={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')} />
-      <figcaption className="mt-1 text-[11px] text-slate-400">{label}</figcaption>
+    <figure className="group text-center">
+      <div className="zoomable rounded-md border border-slate-800 bg-slate-800 transition-colors duration-200 group-hover:border-slate-600">
+        <img src={hillshadeUrl(id)} alt={`Hillshade of ${label}`} className="aspect-square w-full object-cover" loading="lazy"
+          onError={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = 'hidden')} />
+      </div>
+      <figcaption className="mt-1 text-[11px] text-slate-400 transition-colors duration-200 group-hover:text-slate-200">{label}</figcaption>
     </figure>
   );
 }
@@ -48,7 +50,7 @@ export default function CandidateDetail({ candidate: c, response, defs, datasets
 
   return (
     <article className="space-y-4" aria-label={`Details for ${c.name}`}>
-      <header className="flex items-start justify-between gap-2">
+      <header className="sticky top-14 z-10 -mx-4 -mt-4 flex items-start justify-between gap-2 border-b border-slate-800 bg-slate-900/95 px-4 py-3 backdrop-blur">
         <div>
           <p className="label">Rank #{c.rank} · {KIND_LABEL[c.kind]}</p>
           <h2 className="text-lg font-semibold text-white">{c.name}</h2>
@@ -57,7 +59,11 @@ export default function CandidateDetail({ candidate: c, response, defs, datasets
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
-          <button className="btn-ghost" onClick={onToggleCompare} aria-pressed={inCompare}>
+          <button
+            className={inCompare
+              ? 'btn border border-sky-500/50 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25'
+              : 'btn-ghost'}
+            onClick={onToggleCompare} aria-pressed={inCompare}>
             {inCompare ? 'Remove from compare' : 'Add to compare'}
           </button>
           {onClose && (
@@ -66,10 +72,25 @@ export default function CandidateDetail({ candidate: c, response, defs, datasets
         </div>
       </header>
 
-      <div className="grid grid-cols-3 gap-3 rounded-lg bg-slate-950/60 p-3 text-center">
-        <div><p className="label">Similarity index</p><p className="text-2xl font-semibold text-white">{c.similarity_index.toFixed(1)}</p></div>
-        <div><p className="label">Distance D</p><p className="text-2xl font-semibold text-white">{c.distance.toFixed(3)}</p><p className="text-[10px] text-slate-500">IQR units</p></div>
-        <div><p className="label">Data coverage</p><p className="text-2xl font-semibold text-white">{(100 * c.coverage).toFixed(0)}%</p></div>
+      <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="metric">
+            <p className="label">Similarity index</p>
+            <p className="text-2xl font-semibold text-white">{c.similarity_index.toFixed(1)}</p>
+          </div>
+          <div className="metric">
+            <p className="label">Distance D</p>
+            <p className="text-2xl font-semibold text-white">{c.distance.toFixed(3)}</p>
+            <p className="text-[10px] text-slate-500">IQR units</p>
+          </div>
+          <div className="metric">
+            <p className="label">Data coverage</p>
+            <p className="text-2xl font-semibold text-white">{(100 * c.coverage).toFixed(0)}%</p>
+          </div>
+        </div>
+        {/* The index alone hides its own scale; the bar restores it. */}
+        <IndexMeter value={c.similarity_index} color={indexColor(c.similarity_index)} />
+        <p className="text-[10px] text-slate-500">0 = unlike · 100 = identical on the selected features</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

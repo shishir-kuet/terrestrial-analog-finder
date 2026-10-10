@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AnalogMap from '../components/AnalogMap';
 import CandidateDetail, { DatasetLink, Hillshade } from '../components/CandidateDetail';
 import { RankingChart } from '../components/Charts';
-import { CoordBadge, Empty, ErrorBox, Loading, SectionTitle } from '../components/StateViews';
+import { CoordBadge, Empty, ErrorBox, IndexMeter, Loading, PageHeader, SectionTitle, StepLabel } from '../components/StateViews';
 import { api } from '../lib/api';
 import { fmtCoord, fmtValue, indexColor, KIND_LABEL } from '../lib/format';
 import { useSearch } from '../lib/SearchContext';
@@ -104,16 +104,39 @@ export default function Explorer() {
     );
 
   return (
-    <div className="grid gap-4 p-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+    <div>
+      <PageHeader
+        compact
+        eyebrow={s.body === 'moon' ? 'Lunar reference' : 'Martian reference'}
+        title={target ? `Earth analogs for ${target.name}` : 'Explorer'}
+        aside={
+          <dl className="flex gap-5 text-right">
+            {[
+              ['Candidate pool', poolQ.data ? poolQ.data.length.toLocaleString() : '—'],
+              ['Ranked', res ? String(res.results.length) : '—'],
+              ['In compare', String(s.compareIds.length)],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="label">{k}</dt>
+                <dd className="text-lg font-semibold text-white">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        }
+      >
+        Set the weights yourself, then read the per-feature breakdown behind every score.
+      </PageHeader>
+
+      <div className="grid gap-4 p-4 lg:grid-cols-[360px_minmax(0,1fr)]">
       {/* ------------------------------------------------ controls */}
-      <aside className="space-y-4" aria-label="Search configuration">
+      <aside className="space-y-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pr-1" aria-label="Search configuration">
         <div className="card space-y-3">
           <div>
-            <p className="label mb-1">1 · Planetary body</p>
+            <StepLabel n={1}>Planetary body</StepLabel>
             <div role="radiogroup" aria-label="Planetary body" className="grid grid-cols-2 gap-1 rounded-lg bg-slate-950 p-1">
               {(['moon', 'mars'] as const).map((b) => (
                 <button key={b} role="radio" aria-checked={s.body === b}
-                  className={`rounded-md py-1.5 text-sm font-medium ${s.body === b ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'}`}
+                  className={`rounded-md py-1.5 text-sm font-medium transition-all duration-200 ${s.body === b ? 'bg-sky-500 text-slate-950 shadow-lg shadow-sky-500/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                   onClick={() => { s.setBody(b); s.setTargetId(null); setSelectedId(null); }}>
                   {b === 'moon' ? 'Moon' : 'Mars'}
                 </button>
@@ -121,7 +144,8 @@ export default function Explorer() {
             </div>
           </div>
           <div>
-            <label htmlFor="target" className="label mb-1 block">2 · Reference region</label>
+            <StepLabel n={2}>Reference region</StepLabel>
+            <label htmlFor="target" className="sr-only">Reference region</label>
             {targetsQ.loading ? <Loading label="Loading regions…" /> : (
               <select id="target" className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm"
                 value={s.targetId ?? ''} onChange={(e) => { s.setTargetId(e.target.value); setSelectedId(null); }}>
@@ -132,7 +156,7 @@ export default function Explorer() {
           {target && (
             <div className="space-y-2">
               <div className="flex gap-3">
-                <div className="w-28 shrink-0"><Hillshade id={target.id} label="12 km window" /></div>
+                <div className="zoomable w-28 shrink-0 rounded-md"><Hillshade id={target.id} label="12 km window" /></div>
                 <div className="text-xs text-slate-300">
                   <p>{fmtCoord(target.lat, target.lon)}</p>
                   <p className="mt-0.5"><CoordBadge status={target.coordinate_status} /></p>
@@ -153,7 +177,7 @@ export default function Explorer() {
         </div>
 
         <div className="card space-y-3">
-          <p className="label">3 · Features and weights</p>
+          <StepLabel n={3}>Features and weights</StepLabel>
           {featuresQ.loading && <Loading />}
           {(featuresQ.data?.features ?? []).map((f) => {
             const w = weights[f.key];
@@ -183,7 +207,7 @@ export default function Explorer() {
         </div>
 
         <div className="card space-y-3 text-sm">
-          <p className="label">4 · Earth candidates and rules</p>
+          <StepLabel n={4}>Earth candidates and rules</StepLabel>
           {(['earth_named', 'earth_survey'] as const).map((k) => (
             <label key={k} className="flex items-center gap-2">
               <input type="checkbox" checked={kinds[k]} onChange={(e) => setKinds({ ...kinds, [k]: e.target.checked })} />
@@ -229,10 +253,19 @@ export default function Explorer() {
           </label>
         </div>
 
-        {weightError && <p className="text-xs text-rose-300" role="alert">{weightError}</p>}
-        <button className="btn-primary w-full py-2.5" disabled={!target || !weightsReady || running || !!weightError} onClick={runSearch}>
-          {running ? 'Searching…' : 'Find Earth analogs'}
-        </button>
+        {/* Sticky so the action stays reachable however far the weight list scrolls. */}
+        <div className="sticky bottom-0 -mx-1 space-y-2 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent px-1 pb-1 pt-3">
+          {weightError && <p className="text-xs text-rose-300" role="alert">{weightError}</p>}
+          <button className="btn-primary w-full py-2.5 shadow-lg shadow-sky-500/20 transition-transform hover:scale-[1.01]"
+            disabled={!target || !weightsReady || running || !!weightError} onClick={runSearch}>
+            {running ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900/40 border-t-slate-900" />
+                Searching…
+              </>
+            ) : 'Find Earth analogs'}
+          </button>
+        </div>
         {searchError && <ErrorBox message={searchError} onRetry={runSearch} />}
       </aside>
 
@@ -269,24 +302,34 @@ export default function Explorer() {
                   <label className="flex items-center gap-1"><input type="checkbox" checked={showExcluded} onChange={(e) => setShowExcluded(e.target.checked)} /> show unranked</label>
                 </div>
               </div>
-              {res.warnings.map((w) => <p key={w} className="rounded bg-amber-950/40 p-2 text-xs text-amber-200">{w}</p>)}
+              {res.warnings.map((w) => (
+                <p key={w} className="rounded-lg border border-amber-500/25 bg-amber-950/30 p-2 text-xs text-amber-200">{w}</p>
+              ))}
               {visible.length === 0 ? (
                 <Empty title="No ranked candidates">No candidate met the coverage requirement with the current filters. Try lowering the minimum coverage or including more candidate types.</Empty>
               ) : (
-                <ol className="max-h-[420px] space-y-1 overflow-y-auto pr-1" aria-label="Ranked results">
+                <ol className="max-h-[440px] space-y-1.5 overflow-y-auto pr-1" aria-label="Ranked results">
                   {visible.map((r) => {
                     const top = [...r.comparisons].sort((a, b) => b.contribution - a.contribution)[0];
+                    const tone = indexColor(r.similarity_index);
+                    const on = r.id === selectedId;
                     return (
                       <li key={r.id}>
-                        <button onClick={() => setSelectedId(r.id)} aria-current={r.id === selectedId}
-                          className={`w-full rounded-lg border p-2 text-left transition ${r.id === selectedId ? 'border-sky-400 bg-sky-950/40' : 'border-slate-800 hover:bg-slate-800/60'}`}>
+                        <button onClick={() => setSelectedId(r.id)} aria-current={on}
+                          className={`group relative w-full overflow-hidden rounded-lg border py-2 pl-3 pr-2 text-left transition-all duration-200 ${
+                            on ? 'border-sky-400/70 bg-sky-950/40 shadow-lg shadow-sky-950/50'
+                               : 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/50'}`}>
+                          {/* Left edge carries the index colour, so the list reads
+                              as a ranked gradient before any number is parsed. */}
+                          <span aria-hidden className="absolute inset-y-0 left-0 w-1 transition-all duration-200 group-hover:w-1.5"
+                            style={{ background: tone, opacity: on ? 1 : 0.55 }} />
                           <div className="flex items-center gap-2">
-                            <span className="w-8 font-mono text-xs text-slate-400">#{r.rank}</span>
-                            <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: indexColor(r.similarity_index) }} />
-                            <span className="min-w-0 flex-1 truncate text-sm text-slate-100">{r.name}</span>
-                            <span className="font-mono text-sm text-white">{r.similarity_index.toFixed(1)}</span>
+                            <span className="w-8 num text-xs text-slate-500">#{r.rank}</span>
+                            <span className="min-w-0 flex-1 truncate text-sm text-slate-100 transition-colors group-hover:text-white">{r.name}</span>
+                            <span className="num text-base font-semibold text-white">{r.similarity_index.toFixed(1)}</span>
                           </div>
-                          <div className="ml-10 mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-slate-400">
+                          <div className="ml-10 mt-1"><IndexMeter value={r.similarity_index} color={tone} /></div>
+                          <div className="ml-10 mt-1 flex flex-wrap gap-x-3 text-[11px] text-slate-400">
                             <span>{KIND_LABEL[r.kind]}</span>
                             <span>coverage {(100 * r.coverage).toFixed(0)}%</span>
                             {top && <span>largest difference: {defs[top.key]?.label ?? top.key}</span>}
@@ -320,6 +363,7 @@ export default function Explorer() {
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,13 @@
-import { ErrorBox, Loading, SectionTitle } from '../components/StateViews';
+import { ErrorBox, Loading, PageHeader, SectionTitle } from '../components/StateViews';
 import { api } from '../lib/api';
 import { useAsync } from '../lib/useAsync';
+
+/** Body tints, matching the landing page so a dataset reads the same everywhere. */
+const BODY_BADGE: Record<string, string> = {
+  moon: 'bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/30',
+  mars: 'bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/30',
+  earth: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/30',
+};
 
 export default function Methodology() {
   const m = useAsync(() => api.methodology(), []);
@@ -8,20 +15,70 @@ export default function Methodology() {
   const f = useAsync(() => api.features(), []);
   const e = useAsync(() => api.environment(), []);
 
-  return (
-    <div className="mx-auto max-w-5xl space-y-5 p-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-white">Data and methodology</h1>
-        <p className="text-sm text-slate-400">Everything the ranking depends on, served live from the analysis backend.</p>
-      </header>
+  const sections: [id: string, label: string][] = [
+    ['datasets', 'Datasets'],
+    ['considered', 'Also considered'],
+    ['method', 'Similarity method'],
+    ['features', 'Features'],
+    ['thermal', 'Thermal & mineral'],
+    ['sensitivity', 'Sensitivity'],
+    ['limitations', 'Limitations'],
+  ];
 
-      <section className="card space-y-3">
+  return (
+    <div>
+      <PageHeader
+        eyebrow="Reproducible by design"
+        title="Data and methodology"
+        aside={
+          m.data?.manifest?.built_at && (
+            <p className="text-right text-xs text-slate-400">
+              <span className="label block">Data build</span>
+              <span className="num text-slate-200">{String(m.data.manifest.built_at).slice(0, 10)}</span>
+            </p>
+          )
+        }
+      >
+        Everything the ranking depends on, served live from the analysis backend — no figure on this page is typed by hand.
+      </PageHeader>
+
+      {/* Jump bar: this page is long and people arrive looking for one section. */}
+      <nav aria-label="Sections" className="sticky top-14 z-20 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
+        <ul className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-2 text-xs">
+          {sections.map(([id, label]) => (
+            <li key={id}>
+              {/* A plain `#id` href would overwrite the HashRouter route and
+                  land on "page not found", so scroll the section into view. */}
+              <button
+                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="whitespace-nowrap rounded-full border border-slate-800 px-3 py-1 text-slate-400 transition-colors duration-150 hover:border-sky-500/50 hover:bg-slate-900 hover:text-sky-300">
+                {label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="mx-auto max-w-5xl space-y-5 p-4">
+
+      <section id="datasets" className="scroll-mt-28 card space-y-3">
         <SectionTitle>Datasets integrated</SectionTitle>
         {d.loading && <Loading />}
         {d.error && <ErrorBox message={d.error} onRetry={d.reload} />}
         {d.data?.integrated.map((x) => (
-          <details key={x.id} className="rounded-lg border border-slate-800 p-3" open>
-            <summary className="cursor-pointer font-medium text-slate-100">{x.name} <span className="badge ml-1 bg-slate-800 text-slate-300">{x.body}</span></summary>
+          <details key={x.id} className="group rounded-lg border border-slate-800 p-3 transition-colors duration-200 hover:border-slate-700 open:bg-slate-950/40">
+            {/* Collapsed by default, but the summary already carries provider,
+                resolution and licence so the list is useful without expanding. */}
+            <summary className="cursor-pointer list-none">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className={`badge ${BODY_BADGE[x.body] ?? 'bg-slate-800 text-slate-300'}`}>{x.body}</span>
+                <span className="font-medium text-slate-100 group-hover:text-white">{x.name}</span>
+                <span aria-hidden className="ml-auto text-slate-600 transition-transform duration-200 group-open:rotate-90">›</span>
+              </span>
+              <span className="mt-1 block text-xs text-slate-500">
+                {x.provider} · {x.spatial_resolution} · {x.license}
+              </span>
+            </summary>
             <dl className="mt-2 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[200px_1fr]">
               {([
                 ['Provider', x.provider], ['Source', <a key="s" className="link break-all" href={x.source_url} target="_blank" rel="noreferrer">{x.source_url}</a>],
@@ -38,7 +95,7 @@ export default function Methodology() {
         ))}
       </section>
 
-      <section className="card">
+      <section id="considered" className="scroll-mt-28 card">
         <SectionTitle sub="Investigated but not integrated in this build, and why.">Other sources considered</SectionTitle>
         <table className="tbl">
           <thead><tr><th>Source</th><th>Status</th><th>Would provide</th></tr></thead>
@@ -50,7 +107,7 @@ export default function Methodology() {
         </table>
       </section>
 
-      <section className="card space-y-2 text-sm">
+      <section id="method" className="scroll-mt-28 card space-y-2 text-sm">
         <SectionTitle>Similarity method</SectionTitle>
         {m.loading && <Loading />}
         {m.error && <ErrorBox message={m.error} onRetry={m.reload} />}
@@ -59,7 +116,7 @@ export default function Methodology() {
             <p>{m.data.summary}</p>
             <p><span className="text-slate-400">Window:</span> {m.data.window.size_m / 1000} km × {m.data.window.size_m / 1000} km, {m.data.window.grid_res_m} m grid, {m.data.window.projection}; windows with &lt; {100 * m.data.window.min_valid_fraction}% valid cells are not scored.</p>
             <p><span className="text-slate-400">Normalisation:</span> {m.data.normalization}</p>
-            <pre className="overflow-x-auto rounded-lg bg-slate-950 p-3 font-mono text-xs text-sky-200">{`d_i = (T_i(candidate) − T_i(reference)) / IQR_i        (scalar features)
+            <pre className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-sky-200 shadow-inner">{`d_i = (T_i(candidate) − T_i(reference)) / IQR_i        (scalar features)
 d_i = W1(slope_hist_candidate, slope_hist_reference) / IQR_slope   (distribution)
 ${m.data.distance}
 ${m.data.similarity_index}`}</pre>
@@ -70,10 +127,10 @@ ${m.data.similarity_index}`}</pre>
         )}
       </section>
 
-      <section className="card overflow-x-auto">
+      <section id="features" className="card max-h-[75vh] scroll-mt-28 overflow-auto">
         <SectionTitle>Features</SectionTitle>
         {f.error && <ErrorBox message={f.error} />}
-        <table className="tbl">
+        <table className="tbl tbl-sticky">
           <thead><tr><th>Feature</th><th>Meaning</th><th>Method</th><th>Transform · scale (IQR)</th><th>Limitations</th></tr></thead>
           <tbody>
             {f.data?.features.map((x) => (
@@ -89,7 +146,7 @@ ${m.data.similarity_index}`}</pre>
         </table>
       </section>
 
-      <section className="card space-y-2 text-sm">
+      <section id="thermal" className="card scroll-mt-28 space-y-2 text-sm">
         <SectionTitle sub="Built separately from the terrain layer and merged onto each location, because coverage is uneven by nature.">
           Thermal and mineral layer
         </SectionTitle>
@@ -118,7 +175,7 @@ ${m.data.similarity_index}`}</pre>
       </section>
 
       {m.data?.sensitivity && (
-        <section className="card text-sm">
+        <section id="sensitivity" className="card scroll-mt-28 text-sm">
           <SectionTitle sub={m.data.sensitivity.description}>Sensitivity analysis</SectionTitle>
           <table className="tbl">
             <thead><tr><th>Perturbation</th><th>Median Spearman ρ vs baseline</th><th>Median top-10 overlap</th><th>Targets</th></tr></thead>
@@ -131,9 +188,9 @@ ${m.data.similarity_index}`}</pre>
         </section>
       )}
 
-      <section className="card text-sm">
+      <section id="limitations" className="card scroll-mt-28 text-sm">
         <SectionTitle>Scientific limitations</SectionTitle>
-        <ul className="list-disc space-y-1 pl-5 text-slate-300">
+        <ul className="space-y-2 text-slate-300 [&>li]:rounded-lg [&>li]:border [&>li]:border-slate-800/70 [&>li]:bg-slate-950/40 [&>li]:p-2.5 [&>li]:transition-colors [&>li]:duration-150 [&>li:hover]:border-slate-700 [&>li:hover]:bg-slate-900/60">
           <li>The default ranking compares terrain geometry only. Thermophysical character enters only through the thermal-inertia percentile, which is off by default; atmosphere, gravity, radiation, illumination and regolith depth are never represented.</li>
           <li>The thermal-inertia percentile compares ranks, not physical values: Earth's apparent thermal inertia (K⁻¹, from ECOSTRESS and VIIRS) and Mars' TES thermal inertia (tiu) are different quantities, and matching their within-body percentiles assumes the two distributions correspond. Earth percentiles are relative to this app's arid/volcanic/polar pool, not to Earth as a whole, and the Moon has no thermal-inertia product in the archives reachable here.</li>
           <li>EMIT mineral identifications are per-pixel spectral-library matches grouped into classes by this project, available only where EMIT has flown; they have no planetary counterpart in this build, so they are shown but never scored.</li>
@@ -145,6 +202,7 @@ ${m.data.similarity_index}`}</pre>
           <li>The similarity index is not a probability and says nothing about landing safety, habitability or mission suitability.</li>
         </ul>
       </section>
+      </div>
     </div>
   );
 }
