@@ -121,7 +121,7 @@ export default function Methodology() {
       </div>
 
       {/* ------------------------------------------------------------ masthead */}
-      <header className="border-b border-line bg-surface">
+      <header className="on-dark border-b border-line">
         <div className="mx-auto max-w-content px-4 py-7 sm:px-6">
           <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
             <div className="max-w-prose">

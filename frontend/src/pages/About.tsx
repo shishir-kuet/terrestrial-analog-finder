@@ -45,7 +45,7 @@ export default function About() {
   return (
     <div className="pb-section-lg">
       {/* ------------------------------------------------------------ masthead */}
-      <header className="border-b border-line bg-surface">
+      <header className="on-dark border-b border-line">
         <div className="mx-auto max-w-content px-4 py-section sm:px-6">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-end">
             <div className="max-w-prose">
@@ -159,10 +159,6 @@ export default function About() {
             </p>
           </div>
         </Reveal>
-
-        <p className="border-t border-line pt-5 text-center text-xs text-ink-faint">
-          Independent hackathon project · not affiliated with or endorsed by NASA, ESA or USGS
-        </p>
       </div>
     </div>
   );

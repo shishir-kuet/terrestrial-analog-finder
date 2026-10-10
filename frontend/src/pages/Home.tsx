@@ -203,7 +203,7 @@ export default function Home() {
   return (
     <div className="pb-16">
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative isolate border-b border-line">
+      <section className="on-dark relative isolate border-b border-line">
         <HeroBackdrop />
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 lg:grid-cols-[1.15fr_1fr] lg:py-20">
           <div className="rise space-y-5">

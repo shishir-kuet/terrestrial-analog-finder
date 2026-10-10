@@ -62,7 +62,7 @@ export function PageHeader({ eyebrow, title, children, aside, compact }: {
   eyebrow: string; title: ReactNode; children?: ReactNode; aside?: ReactNode; compact?: boolean;
 }) {
   return (
-    <header className="border-b border-line bg-surface">
+    <header className="on-dark border-b border-line">
       <div className={`mx-auto flex max-w-content flex-wrap items-end justify-between gap-x-8 gap-y-4 px-4 sm:px-6 ${compact ? 'py-4' : 'py-7'}`}>
         <div className="min-w-0 max-w-prose">
           <p className="label text-accent-ink">{eyebrow}</p>
