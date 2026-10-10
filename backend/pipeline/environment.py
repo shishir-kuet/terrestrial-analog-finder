@@ -6,7 +6,7 @@ across bodies: every number is reduced from one named product, and a window with
 too little valid data returns ``None`` with a reason.
 
 Products read (all verified by downloading real granules; see
-``docs/DATA_SOURCES.md`` for the full dataset records):
+``data/sources/datasets.json``, served at /api/datasets, for the full records):
 
 Earth
     ECOSTRESS ``ECO_L2T_LSTE`` v002 land-surface temperature (70 m, K) - day and
@@ -433,7 +433,8 @@ def apparent_thermal_inertia(day_lst: np.ndarray, night_lst: np.ndarray, albedo:
 
     ATI (units K^-1) is a monotone proxy for thermal inertia under comparable
     insolation; it is **not** thermal inertia and is not in tiu. See
-    ``docs/METHODOLOGY.md`` section 9 for what this does and does not support.
+    the environmental layer notes at /api/environment and /api/methodology for
+    what this does and does not support.
     """
     delta = day_lst - night_lst
     with np.errstate(all="ignore"):

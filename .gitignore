@@ -11,3 +11,17 @@ data/cache/
 # Local transfer archives: large, regenerable, and over Hugging Face's
 # 10 MB per-file threshold, so they must never enter the deploy history.
 *.tar.gz
+
+# Deck exports downloaded back into the project.
+*.pptx
+
+# Working documents kept out of the repository. They are still on disk, and in
+# git history before this commit; the app serves the same material live from
+# /api/methodology, /api/datasets and /api/features.
+docs/ARCHITECTURE.md
+docs/DATA_SOURCES.md
+docs/DELIVERY_REPORT.md
+docs/DEMO_GUIDE.md
+docs/METHODOLOGY.md
+docs/SCIENTIFIC_LIMITATIONS.md
+
