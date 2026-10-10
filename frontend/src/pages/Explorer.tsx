@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AnalogMap from '../components/AnalogMap';
 import CandidateDetail, { DatasetLink, Hillshade } from '../components/CandidateDetail';
 import { RankingChart } from '../components/Charts';
-import { CoordBadge, Empty, ErrorBox, IndexMeter, Loading, PageHeader, SectionTitle, StepLabel } from '../components/StateViews';
+import { CoordBadge, Empty, ErrorBox, IndexMeter, Loading, PageHeader, StepLabel } from '../components/StateViews';
 import { api } from '../lib/api';
 import { fmtCoord, fmtValue, indexColor, KIND_LABEL } from '../lib/format';
 import { useSearch } from '../lib/SearchContext';
@@ -290,9 +290,13 @@ export default function Explorer() {
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
             <div className="card min-w-0 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <SectionTitle sub={`${res.results.length} shown of ${res.n_candidates_considered} considered · ${res.excluded.length} not ranked`}>
-                  Ranked Earth candidates for {res.target.name}
-                </SectionTitle>
+                <div>
+                  <h2 className="h-section !text-lg">Ranked Earth candidates</h2>
+                  <p className="ml-4 text-xs text-slate-400">
+                    for {res.target.name} · {res.results.length} shown of {res.n_candidates_considered} considered ·{' '}
+                    {res.excluded.length} not ranked
+                  </p>
+                </div>
                 <div className="flex items-center gap-2 text-xs">
                   <select aria-label="Filter results by type" className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1" value={listFilter} onChange={(e) => setListFilter(e.target.value as typeof listFilter)}>
                     <option value="all">All types</option>

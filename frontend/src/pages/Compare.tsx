@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { HypsoChart, SlopeDistChart } from '../components/Charts';
 import { Hillshade } from '../components/CandidateDetail';
+import Reveal from '../components/Reveal';
 import { Empty, ErrorBox, IndexMeter, Loading, PageHeader, SectionTitle } from '../components/StateViews';
 import { api } from '../lib/api';
 import { fmtCoord, fmtValue, indexColor, SERIES_COLORS } from '../lib/format';
@@ -67,7 +68,7 @@ export default function Compare() {
       </div>
 
       {featuresQ.error && <ErrorBox message={featuresQ.error} />}
-      <div className="card max-h-[70vh] overflow-auto">
+      <Reveal className="card max-h-[70vh] overflow-auto">
         <SectionTitle sub="Measured values per 12 km window. 'unavailable' = not measured; no value is imputed.">Feature table</SectionTitle>
         <table className="tbl tbl-sticky">
           <thead>
@@ -100,19 +101,19 @@ export default function Compare() {
             ))}
           </tbody>
         </table>
-      </div>
+      </Reveal>
 
       {detailsQ.loading && ids.length > 0 && <Loading label="Loading distributions…" />}
       {detailsQ.error && <ErrorBox message={detailsQ.error} onRetry={detailsQ.reload} />}
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="card">
+        <Reveal className="card">
           <SectionTitle sub="Fraction of window area per 1° slope bin.">Slope distributions</SectionTitle>
           <SlopeDistChart series={[{ name: `Reference: ${t.name}`, values: t.slope_hist }, ...(detailsQ.data ?? []).map((d) => ({ name: d.name.slice(0, 30), values: d.slope_hist }))]} />
-        </div>
-        <div className="card">
+        </Reveal>
+        <Reveal className="card" delay={80}>
           <SectionTitle sub="Elevation relative to each window's median.">Relative elevation distributions</SectionTitle>
           <HypsoChart series={[{ name: `Reference: ${t.name}`, values: t.rel_elev_quantiles }, ...(detailsQ.data ?? []).map((d) => ({ name: d.name.slice(0, 30), values: d.rel_elev_quantiles }))]} />
-        </div>
+        </Reveal>
       </div>
       </div>
     </div>

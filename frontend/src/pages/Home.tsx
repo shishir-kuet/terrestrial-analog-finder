@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Reveal from '../components/Reveal';
 import { api, hillshadeUrl } from '../lib/api';
 import { fmtCoord, fmtValue } from '../lib/format';
 import { useSearch } from '../lib/SearchContext';
@@ -237,7 +238,7 @@ export default function Home() {
       </section>
 
       {/* ----------------------------------------------------------- stats */}
-      <section className="mx-auto max-w-6xl px-4 py-10" aria-label="Dataset at a glance">
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Stat
             label="Earth candidates"
@@ -264,11 +265,11 @@ export default function Home() {
             loading={datasets.loading}
           />
         </div>
-      </section>
+      </Reveal>
 
       {/* ------------------------------------------------------------ how */}
-      <section className="mx-auto max-w-6xl px-4 py-6">
-        <h2 className="text-2xl font-semibold text-white">How the ranking works</h2>
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 py-6">
+        <h2 className="h-section">How the ranking works</h2>
         <p className="mt-1 max-w-2xl text-slate-400">
           Three steps, no hidden model. Every number on the results page traces back to a measurement you can inspect.
         </p>
@@ -287,10 +288,10 @@ export default function Home() {
             </li>
           ))}
         </ol>
-      </section>
+      </Reveal>
 
       {/* -------------------------------------------------------- features */}
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 py-10">
         <div className="card">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-xl font-semibold text-white">What actually gets compared</h2>
@@ -328,11 +329,11 @@ export default function Home() {
             </p>
           )}
         </div>
-      </section>
+      </Reveal>
 
       {/* --------------------------------------------------------- sources */}
-      <section className="mx-auto max-w-6xl px-4 py-6">
-        <h2 className="text-xl font-semibold text-white">Built on public mission data</h2>
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 py-6">
+        <h2 className="h-section">Built on public mission data</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(['moon', 'mars', 'earth'] as const).map((b) => (
             <div key={b} className="card card-hover">
@@ -352,7 +353,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </Reveal>
 
       {/* ------------------------------------------------------ disclaimer */}
       <section className="mx-auto max-w-6xl px-4 py-6">

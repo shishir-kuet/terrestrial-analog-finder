@@ -2,15 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  /* One accent, declared once, so the whole app shifts together. */
+  --accent: 56 189 248;      /* sky-400  */
+  --accent-warm: 251 146 60; /* orange-400 */
+}
+
 body { @apply bg-slate-950 text-slate-200 antialiased; }
+
+/* Depth without noise: two fixed, very low-opacity glows plus a hairline grid.
+   Fixed means it does not scroll, so long pages keep one continuous backdrop
+   instead of repeating a texture. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -8%, rgb(var(--accent) / 0.10), transparent 60%),
+    radial-gradient(52rem 36rem at 95% 4%, rgb(var(--accent-warm) / 0.06), transparent 62%),
+    linear-gradient(to bottom, #0b1120 0%, #020617 55%);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(to right, rgb(148 163 184 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(148 163 184 / 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  /* Fade the grid out down the page so it reads as atmosphere, not a wireframe. */
+  mask-image: radial-gradient(90rem 60rem at 50% -10%, #000 25%, transparent 78%);
+}
 .leaflet-container { background: #0b1220; font: inherit; }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { @apply bg-slate-900 text-slate-100; }
 .leaflet-control-attribution { @apply !bg-slate-900/80 !text-slate-400; }
 .leaflet-control-attribution a { @apply !text-sky-300; }
 
 @layer components {
-  .card { @apply rounded-xl border border-slate-800 bg-slate-900/70 p-4; }
+  .card { @apply rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 backdrop-blur-sm; }
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50; }
   .btn-primary { @apply btn bg-sky-500 text-slate-950 hover:bg-sky-400; }
   .btn-ghost { @apply btn border border-slate-700 text-slate-200 hover:bg-slate-800; }
@@ -120,4 +156,54 @@ select, input[type='number'] { @apply transition-colors duration-150 hover:borde
 @media (prefers-reduced-motion: reduce) {
   .card-hover:hover, .btn:active:not(:disabled) { transform: none !important; }
   .zoomable:hover img { transform: none !important; }
+}
+
+/* ------------------------------------------------------ scroll choreography
+   Sections lift in as they are reached, so a long document reads as it is
+   travelled rather than arriving as one static slab. Transition, not keyframe
+   animation, so the reduced-motion override below is a true no-op. */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-in { opacity: 1; transform: none; }
+
+/* Reading-position bar, pinned under the nav. */
+.progress-rail { @apply fixed inset-x-0 top-0 z-[1200] h-0.5 bg-transparent; }
+.progress-fill {
+  @apply h-full origin-left;
+  background: linear-gradient(90deg, rgb(var(--accent)), rgb(var(--accent-warm)));
+  transition: transform 0.1s linear;
+}
+
+@layer components {
+  /* Section heading: a glowing accent bar earns attention that a bold weight
+     alone does not, and it marks where each section starts on a long page. */
+  .h-section { @apply flex items-center gap-3 text-xl font-semibold tracking-tight text-white sm:text-2xl; }
+  .h-section::before {
+    content: '';
+    @apply h-6 w-1 shrink-0 rounded-full;
+    background: linear-gradient(to bottom, rgb(var(--accent)), rgb(var(--accent) / 0.2));
+    box-shadow: 0 0 12px rgb(var(--accent) / 0.5);
+  }
+
+  /* In-page nav pill, with an is-current state for the scroll spy. */
+  .pill { @apply whitespace-nowrap rounded-full border border-slate-800 bg-slate-900/40 px-3 py-1 text-slate-400 transition-all duration-200 hover:border-slate-600 hover:text-slate-100; }
+  .pill-on { @apply border-sky-500/50 bg-sky-500/10 text-sky-300 shadow-[0_0_16px_rgb(56_189_248_/_0.15)]; }
+
+  /* Figure + caption, for the small fact strips under a page header. */
+  .fact { @apply rounded-xl border border-slate-800/70 bg-slate-900/40 px-3 py-2 backdrop-blur-sm transition-colors duration-200 hover:border-slate-700 hover:bg-slate-900/70; }
+  .fact-n { @apply text-2xl font-semibold leading-none text-white; }
+  .fact-l { @apply mt-1 block text-[11px] leading-tight text-slate-500; }
+
+  /* Left edge that tints a card by planetary body. */
+  .edge { @apply relative overflow-hidden; }
+  .edge::before { content: ''; @apply absolute inset-y-0 left-0 w-0.5 transition-all duration-200; background: currentColor; opacity: 0.45; }
+  .edge:hover::before { @apply w-1; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .progress-fill { transition: none !important; }
 }

@@ -1,5 +1,7 @@
-import { ErrorBox, Loading, PageHeader, SectionTitle } from '../components/StateViews';
+import Reveal from '../components/Reveal';
+import { ErrorBox, Loading, PageHeader } from '../components/StateViews';
 import { api } from '../lib/api';
+import { useScrollProgress, useScrollSpy } from '../lib/useScroll';
 import { useAsync } from '../lib/useAsync';
 
 /** Body tints, matching the landing page so a dataset reads the same everywhere. */
@@ -7,6 +9,13 @@ const BODY_BADGE: Record<string, string> = {
   moon: 'bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/30',
   mars: 'bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/30',
   earth: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/30',
+};
+
+/** Text colour on the card, which `.edge` reads through currentColor. */
+const BODY_EDGE: Record<string, string> = {
+  moon: 'text-sky-400',
+  mars: 'text-orange-400',
+  earth: 'text-emerald-400',
 };
 
 export default function Methodology() {
@@ -25,8 +34,24 @@ export default function Methodology() {
     ['limitations', 'Limitations'],
   ];
 
+  const active = useScrollSpy(sections.map(([id]) => id));
+  const progress = useScrollProgress();
+
+  // Headline figures, read from the same endpoints the sections below render.
+  const facts: [value: string, label: string][] = [
+    [d.data ? String(d.data.integrated.length) : '—', 'datasets integrated'],
+    [d.data ? String(d.data.investigated_not_integrated.length) : '—', 'considered, not used'],
+    [f.data ? String(f.data.features.length) : '—', 'measured features'],
+    [e.data ? String(e.data.earth_windows_ok) : '—', 'complete Earth windows'],
+    [m.data?.sensitivity ? String(m.data.sensitivity.experiments.length) : '—', 'robustness checks'],
+  ];
+
   return (
     <div>
+      <div className="progress-rail" aria-hidden>
+        <div className="progress-fill" style={{ transform: `scaleX(${progress})` }} />
+      </div>
+
       <PageHeader
         eyebrow="Reproducible by design"
         title="Data and methodology"
@@ -42,16 +67,28 @@ export default function Methodology() {
         Everything the ranking depends on, served live from the analysis backend — no figure on this page is typed by hand.
       </PageHeader>
 
+      <div className="mx-auto max-w-5xl px-4 pt-4">
+        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+          {facts.map(([v, l], i) => (
+            <Reveal key={l} delay={i * 50} className="fact">
+              <dd className="fact-n">{v}</dd>
+              <dt className="fact-l">{l}</dt>
+            </Reveal>
+          ))}
+        </dl>
+      </div>
+
       {/* Jump bar: this page is long and people arrive looking for one section. */}
-      <nav aria-label="Sections" className="sticky top-14 z-20 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
+      <nav aria-label="Sections" className="sticky top-[52px] z-20 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md">
         <ul className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-2 text-xs">
           {sections.map(([id, label]) => (
             <li key={id}>
               {/* A plain `#id` href would overwrite the HashRouter route and
                   land on "page not found", so scroll the section into view. */}
               <button
+                aria-current={active === id ? 'true' : undefined}
                 onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="whitespace-nowrap rounded-full border border-slate-800 px-3 py-1 text-slate-400 transition-colors duration-150 hover:border-sky-500/50 hover:bg-slate-900 hover:text-sky-300">
+                className={`pill ${active === id ? 'pill-on' : ''}`}>
                 {label}
               </button>
             </li>
@@ -61,12 +98,13 @@ export default function Methodology() {
 
       <div className="mx-auto max-w-5xl space-y-5 p-4">
 
-      <section id="datasets" className="scroll-mt-28 card space-y-3">
-        <SectionTitle>Datasets integrated</SectionTitle>
+      <Reveal as="section" id="datasets" className="scroll-mt-28 card space-y-3">
+        <h2 className="h-section mb-3">Datasets integrated</h2>
         {d.loading && <Loading />}
         {d.error && <ErrorBox message={d.error} onRetry={d.reload} />}
         {d.data?.integrated.map((x) => (
-          <details key={x.id} className="group rounded-lg border border-slate-800 p-3 transition-colors duration-200 hover:border-slate-700 open:bg-slate-950/40">
+          <details key={x.id}
+            className={`edge group rounded-lg border border-slate-800 bg-slate-950/30 py-3 pl-4 pr-3 transition-all duration-200 hover:border-slate-700 hover:bg-slate-950/60 open:bg-slate-950/60 ${BODY_EDGE[x.body] ?? 'text-slate-600'}`}>
             {/* Collapsed by default, but the summary already carries provider,
                 resolution and licence so the list is useful without expanding. */}
             <summary className="cursor-pointer list-none">
@@ -75,7 +113,7 @@ export default function Methodology() {
                 <span className="font-medium text-slate-100 group-hover:text-white">{x.name}</span>
                 <span aria-hidden className="ml-auto text-slate-600 transition-transform duration-200 group-open:rotate-90">›</span>
               </span>
-              <span className="mt-1 block text-xs text-slate-500">
+              <span className="mt-1.5 block text-xs leading-relaxed text-slate-500">
                 {x.provider} · {x.spatial_resolution} · {x.license}
               </span>
             </summary>
@@ -93,10 +131,11 @@ export default function Methodology() {
             </dl>
           </details>
         ))}
-      </section>
+      </Reveal>
 
-      <section id="considered" className="scroll-mt-28 card">
-        <SectionTitle sub="Investigated but not integrated in this build, and why.">Other sources considered</SectionTitle>
+      <Reveal as="section" id="considered" className="scroll-mt-28 card">
+        <h2 className="h-section">Other sources considered</h2>
+        <p className="mb-2 ml-4 text-sm text-slate-400">Investigated but not integrated in this build, and why.</p>
         <table className="tbl">
           <thead><tr><th>Source</th><th>Status</th><th>Would provide</th></tr></thead>
           <tbody>
@@ -105,10 +144,10 @@ export default function Methodology() {
             ))}
           </tbody>
         </table>
-      </section>
+      </Reveal>
 
-      <section id="method" className="scroll-mt-28 card space-y-2 text-sm">
-        <SectionTitle>Similarity method</SectionTitle>
+      <Reveal as="section" id="method" className="scroll-mt-28 card space-y-2 text-sm">
+        <h2 className="h-section mb-3">Similarity method</h2>
         {m.loading && <Loading />}
         {m.error && <ErrorBox message={m.error} onRetry={m.reload} />}
         {m.data && (
@@ -125,10 +164,10 @@ ${m.data.similarity_index}`}</pre>
             <p className="rounded-lg bg-amber-950/30 p-2 text-amber-100">{m.data.interpretation}</p>
           </>
         )}
-      </section>
+      </Reveal>
 
-      <section id="features" className="card max-h-[75vh] scroll-mt-28 overflow-auto">
-        <SectionTitle>Features</SectionTitle>
+      <Reveal as="section" id="features" className="card max-h-[75vh] scroll-mt-28 overflow-auto">
+        <h2 className="h-section mb-3">Features</h2>
         {f.error && <ErrorBox message={f.error} />}
         <table className="tbl tbl-sticky">
           <thead><tr><th>Feature</th><th>Meaning</th><th>Method</th><th>Transform · scale (IQR)</th><th>Limitations</th></tr></thead>
@@ -144,12 +183,13 @@ ${m.data.similarity_index}`}</pre>
             ))}
           </tbody>
         </table>
-      </section>
+      </Reveal>
 
-      <section id="thermal" className="card scroll-mt-28 space-y-2 text-sm">
-        <SectionTitle sub="Built separately from the terrain layer and merged onto each location, because coverage is uneven by nature.">
-          Thermal and mineral layer
-        </SectionTitle>
+      <Reveal as="section" id="thermal" className="card scroll-mt-28 space-y-2 text-sm">
+        <h2 className="h-section">Thermal and mineral layer</h2>
+        <p className="mb-2 ml-4 text-sm text-slate-400">
+          Built separately from the terrain layer and merged onto each location, because coverage is uneven by nature.
+        </p>
         {e.loading && <Loading />}
         {e.error && <ErrorBox message={e.error} onRetry={e.reload} />}
         {e.data && (
@@ -172,11 +212,12 @@ ${m.data.similarity_index}`}</pre>
             </details>
           </>
         )}
-      </section>
+      </Reveal>
 
       {m.data?.sensitivity && (
-        <section id="sensitivity" className="card scroll-mt-28 text-sm">
-          <SectionTitle sub={m.data.sensitivity.description}>Sensitivity analysis</SectionTitle>
+        <Reveal as="section" id="sensitivity" className="card scroll-mt-28 text-sm">
+          <h2 className="h-section">Sensitivity analysis</h2>
+          <p className="mb-2 ml-4 text-sm text-slate-400">{m.data.sensitivity.description}</p>
           <table className="tbl">
             <thead><tr><th>Perturbation</th><th>Median Spearman ρ vs baseline</th><th>Median top-10 overlap</th><th>Targets</th></tr></thead>
             <tbody>
@@ -185,11 +226,11 @@ ${m.data.similarity_index}`}</pre>
               ))}
             </tbody>
           </table>
-        </section>
+        </Reveal>
       )}
 
-      <section id="limitations" className="card scroll-mt-28 text-sm">
-        <SectionTitle>Scientific limitations</SectionTitle>
+      <Reveal as="section" id="limitations" className="card scroll-mt-28 text-sm">
+        <h2 className="h-section mb-3">Scientific limitations</h2>
         <ul className="space-y-2 text-slate-300 [&>li]:rounded-lg [&>li]:border [&>li]:border-slate-800/70 [&>li]:bg-slate-950/40 [&>li]:p-2.5 [&>li]:transition-colors [&>li]:duration-150 [&>li:hover]:border-slate-700 [&>li:hover]:bg-slate-900/60">
           <li>The default ranking compares terrain geometry only. Thermophysical character enters only through the thermal-inertia percentile, which is off by default; atmosphere, gravity, radiation, illumination and regolith depth are never represented.</li>
           <li>The thermal-inertia percentile compares ranks, not physical values: Earth's apparent thermal inertia (K⁻¹, from ECOSTRESS and VIIRS) and Mars' TES thermal inertia (tiu) are different quantities, and matching their within-body percentiles assumes the two distributions correspond. Earth percentiles are relative to this app's arid/volcanic/polar pool, not to Earth as a whole, and the Moon has no thermal-inertia product in the archives reachable here.</li>
@@ -201,7 +242,7 @@ ${m.data.similarity_index}`}</pre>
           <li>Robust scales depend on the Earth reference pool, so indices are only comparable within one data build and configuration.</li>
           <li>The similarity index is not a probability and says nothing about landing safety, habitability or mission suitability.</li>
         </ul>
-      </section>
+      </Reveal>
       </div>
     </div>
   );

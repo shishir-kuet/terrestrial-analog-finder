@@ -18,7 +18,7 @@ function Nav() {
     ['/about', 'About'],
   ];
   return (
-    <header className="sticky top-0 z-[1100] border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+    <header className="sticky top-0 z-[1100] border-b border-slate-800/70 bg-slate-950/60 backdrop-blur-xl">
       <div className="flex items-center justify-between px-4 py-2.5">
         <NavLink to="/" className="group flex items-center gap-2 font-semibold text-white">
           <span aria-hidden
