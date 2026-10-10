@@ -27,13 +27,19 @@ const STROKE = '#1b1b19';
 const STROKE_SELECTED = '#00564b';
 const GRATICULE = '#8d8b82';
 // Three categories, three hues, validated as a categorical set on this
-// basemap: every pair clears the CVD floor (worst dE 12.4 deutan, 19.2 normal)
-// and each clears 3:1 against the land. Teal is deliberately not among them —
-// it is the similarity ramp, and would collide in the legend once a search
-// runs. Colour is never the only cue: named sites are larger, and unranked
-// ones are dashed and unfilled.
+// basemap rather than picked by eye: every pair clears the CVD floor (worst
+// dE 9.1 deutan, 22.1 normal) and each clears 3:1 against the land.
+//
+// The gold is deep rather than bright for two reasons. A bright yellow drops
+// to about 2:1 on this pale basemap, and an ordinary green collapses into the
+// rose under deuteranopia (dE 0.9-2.6) — the classic red/green pair. Teal is
+// excluded too: it is the similarity ramp, and would collide in the legend
+// once a search runs.
+//
+// Colour is never the only cue: named sites are larger, and unranked ones are
+// dashed and unfilled.
 const MARKER_NAMED = '#2a78d6';     // blue
-const MARKER_SURVEY = '#5b21b6';    // violet
+const MARKER_SURVEY = '#9a7d0a';    // deep gold
 const MARKER_EXCLUDED = '#be123c';  // rose, the reserved status hue
 const POOL_HALO = '#ffffff';
 const TILE_ATTR =
