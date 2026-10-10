@@ -7,3 +7,7 @@ frontend/dist/
 data/cache/
 .env
 *.log
+
+# Local transfer archives: large, regenerable, and over Hugging Face's
+# 10 MB per-file threshold, so they must never enter the deploy history.
+*.tar.gz

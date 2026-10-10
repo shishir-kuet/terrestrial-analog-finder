@@ -44,12 +44,8 @@ Fallback: if the basemap does not load, the map shows a graticule and a notice, 
 
 ## Submission checklist
 
-**Official requirements were not verified.** The challenge site could not be reached from the build environment. Before submitting:
+Moved to **[SUBMISSION.md](SUBMISSION.md)**, which carries the verified Space Apps requirements, the draft
+project-page copy and the full checklist.
 
-- [ ] Read the official challenge page and confirm its objectives and any recommended datasets; record differences in the README §2.
-- [ ] Confirm the official submission requirements (project page fields, demo video or slides, repository link, deadlines).
-- [ ] Add team names to README §16 and the About page.
-- [ ] Push the code to a public repository (`data/cache/` is git-ignored; `data/processed/` is small enough to commit).
-- [ ] Optionally deploy, for example with `docker compose up --build`. Verify the Docker build first; it has not been run.
-- [ ] Record the demo following this script.
-- [ ] Spot-check named-site coordinates against a gazetteer.
+> **The script above is a 2–3 minute live walkthrough and is not the Space Apps "project demo".** That field caps at a
+> **30-second video or a 7-slide deck**. A shot-by-shot 30-second cut is in [SUBMISSION.md](SUBMISSION.md#4-the-demo-required).

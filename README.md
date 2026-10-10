@@ -1,3 +1,17 @@
+---
+title: Terrestrial Analog Finder
+emoji: 🌔
+colorFrom: indigo
+colorTo: gray
+sdk: docker
+app_port: 8000
+pinned: false
+short_description: Rank Earth locations by measured terrain similarity to the Moon and Mars
+---
+
+<!-- The block above configures the Hugging Face Space (see docs/DEPLOYMENT.md).
+     GitHub renders it as a small metadata table; it is not part of the docs. -->
+
 # Terrestrial Analog Finder
 
 Rank places on Earth whose **measured terrain** resembles lunar south-polar sites (the regions discussed for a sustained
@@ -186,6 +200,15 @@ only the next N. It needs a free [NASA Earthdata Login](https://urs.earthdata.na
 `.env.example`); the PDS products need none. It writes `data/processed/environment.json`, which the API merges onto the terrain
 records, so running it changes no terrain value.
 
+## 11b. Deployment
+
+The image is self-contained — the processed dataset and every hillshade render are baked in, and there is no database
+or secret to configure. `docker compose up --build` is the whole local deployment.
+
+For a public URL, the project deploys to a free Hugging Face Space (Docker SDK); the YAML front matter at the top of
+this file is that Space's configuration. Step-by-step instructions, verification checks and alternatives are in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## 12. Testing
 
 ```bash
@@ -234,4 +257,7 @@ These are summarised here. The full list is in [docs/SCIENTIFIC_LIMITATIONS.md](
 
 ## 16. Contributors
 
-Not yet provided. Add team members here before submission.
+**Team ghostblood** — NASA Space Apps Challenge 2026.
+
+Individual member names are not recorded here yet; add them before submitting, and make sure every member is also
+registered and listed on the team's Members tab on spaceappschallenge.org (Global Judging requires it).
