@@ -57,83 +57,52 @@ extensions. **72 words total.**
 
 ---
 
-## 3. The long walkthrough (2:30–3:00)
+## 3. The 4-minute presentation — slide-by-slide script
 
-Linked as supporting material, not as the Project Demo. **≈430 words.**
+This is the longer video the team is recording. It is **supporting material**, not the
+Project Demo field (§1): link it from the detailed description.
 
-### Opening — the problem (0:00–0:25)
+There is a **15-slide deck built for exactly this timing**, with every line below already
+in it as speaker notes, so you can present from the deck alone:
+<https://claude.ai/artifact/J26byTyp7dygS36wx8aiqy>
 
-> Analog site selection for Moon and Mars missions usually comes down to
-> reputation. The Atacama. Haughton Crater. Devon Island. These are good
-> choices, but they were argued for, not measured. If you want a site that
-> matches a specific lunar ridge, on a specific property, at a specific scale,
-> there is no tool that will tell you which one and show you the evidence.
->
-> That is the gap we built for.
+**≈580 words at 2.5 words per second.** Timings are cumulative; if you run long, cut
+from slides 3 and 11 first — they are the two that survive compression.
 
-### What it does (0:25–1:00)
+| # | Slide | Time | What you say |
+|---|---|---|---|
+| 1 | Cover | 0:00–0:12 | "Terrestrial Analog Finder. Which places on Earth actually look like the Moon — measured, not argued. The image behind this title is not stock art: it is a real elevation render of a 12 kilometre window at the lunar south pole, from our own dataset." |
+| 2 | The question | 0:12–0:28 | "Before hardware goes to the Moon, it gets tested somewhere on Earth. Which somewhere — and on what evidence?" *(pause)* |
+| 3 | The problem | 0:28–0:50 | "Today that is settled by reputation. The Atacama. Haughton Crater. Devon Island. These are good choices and they were argued for by people who know the field — but they were not computed. There is no way to ask for the best match to one specific lunar ridge, on one property, at one scale, and see the evidence." |
+| 4 | What we built | 0:50–1:05 | "So we built a search engine for Earth analogs where every score shows its working. Pick a planetary reference. Set what matters to you. Read why each place ranked where it did. 558 Earth windows, ranked in under a second." |
+| 5 | Method 1 — window | 1:05–1:20 | "Three steps. First: cut the same window on all three bodies. LOLA for the Moon, CTX for Mars, Copernicus for Earth — twelve kilometres square everywhere. Big enough to hold a landform, small enough that a rover traverse fits inside it." |
+| 6 | Method 2 — grid | 1:20–1:35 | "Second: put them all on one thirty-metre grid. Each window is reprojected into a local grid centred on its own coordinates, using the right figure for its body. This matters because slope and roughness are properties of the grid you measure them on — without this step, a five-metre lunar product and a thirty-metre Earth product are not comparable, and every number after it is meaningless." |
+| 7 | Method 3 — statistics | 1:35–1:55 | "Third: describe every window with the same six numbers. Relief, median slope, ninetieth-percentile slope, short-baseline roughness, the hypsometric integral, and the full slope distribution. All datum-independent — absolute elevation cannot be compared across bodies, so we report it and never score it. Each difference is divided by that feature's inter-quartile range, so metres and degrees contribute comparably." |
+| 8 | The score | 1:55–2:10 | "The score is a weighted distance, turned into an index from zero to a hundred. No model. No training data. You could re-derive it with a calculator. A hundred means identical on the features you picked; about thirty-seven means they differ by one inter-quartile range on average. It is not a probability and it is not a percentage." |
+| 9 | The dataset | 2:10–2:30 | "570 locations: twelve planetary references, 558 Earth candidates, 469 with a complete window. Eight public datasets from NASA, USGS and ESA, every one cited with its licence and DOI inside the app. We also documented eight more sources we investigated and chose not to integrate, with the reason for each." |
+| 10 | The result | 2:30–2:50 | "Here is one. Connecting ridge, near the lunar south pole. The top Earth analog is a survey cell in the Transantarctic Mountains, Dry Valleys, at seventy-eight and a half degrees south. Similarity index seventy-nine point one, at full data coverage. Both of these renders come out of the same pipeline at the same scale — and nobody picked this pair. The ranking did." |
+| 11 | Why this rank | 2:50–3:08 | "Open any result and the score comes apart: both measured values per feature, how far apart they are, which feature is costing the match, and the slope and elevation distributions overlaid. Change a weight and the whole thing recomputes in front of you. There is no cached answer to disagree with." |
+| 12 | Missing data | 3:08–3:22 | "Gaps are named, never filled in. Askja, in Iceland, is a famous analog site — and our tool refuses to score it, because its caldera lake is masked out and the window is only ninety-two percent valid. Ninety-one of 558 candidates were excluded from this search, each with its reason shown." |
+| 13 | Robustness | 3:22–3:42 | "We tried to break our own ranking. Randomise every weight and the order barely moves — Spearman rho of nought point nine nine eight. Drop any single feature, still above nought point nine eight. Coarsen the grid, still fine. But halve the window to six kilometres and rho falls to nought point nine one. The result is scale dependent. That is a real limitation and it is on the methodology page, not hidden in a footnote." |
+| 14 | What it is not | 3:42–3:55 | "So: a measured, reproducible shortlist, traceable to public archives. Not a probability. Not a landing-site recommendation. Not a habitability judgement. Gravity, atmosphere, radiation, illumination and regolith depth are not in this at all — and the nine limitations that follow from that sit next to the results they limit." |
+| 15 | Close | 3:55–4:00 | "Terrestrial Analog Finder. Team ghostblood." |
 
-*Screen: landing page, then Explorer with Moon selected.*
+**Recording notes**
 
-> Terrestrial Analog Finder measures terrain. Twelve kilometre by twelve
-> kilometre windows, on the Moon, on Mars and on Earth, all resampled to the
-> same thirty metre grid, all described by the same six statistics: local
-> relief, median slope, ninetieth-percentile slope, short-baseline roughness,
-> the hypsometric integral, and the full slope distribution.
->
-> Because every window is measured the same way, a lunar window and an
-> Antarctic window can be compared like with like. Five hundred and seventy
-> locations: twelve planetary references, five hundred and fifty-eight Earth
-> candidates.
-
-### The demo (1:00–2:00)
-
-*Screen: run the Connecting ridge search, open result #1, open the excluded list.*
-
-> Pick Connecting ridge, near the lunar south pole, measured from LOLA. Set
-> the weights yourself — you decide whether roughness matters more than slope.
-> Search.
->
-> The top Earth analog is a survey cell in the Transantarctic Mountains, Dry
-> Valleys, at seventy-eight and a half degrees south. Similarity index
-> seventy-nine. Open it, and the score comes apart: the two hillshades side by
-> side, every feature's measured value, how far apart they are in robust
-> units, and which feature drives the remaining gap.
->
-> Nothing is hidden. Look at Askja, in Iceland — it is not ranked at all,
-> because its caldera lake is masked out and the window is only ninety-two
-> percent valid. We exclude it and say why, rather than scoring it on partial
-> data.
-
-### Why you should believe it (2:00–2:40)
-
-*Screen: Data and methodology page — sensitivity table and limitations.*
-
-> There is no model here. The score is a weighted distance you can re-derive
-> by hand, from eight public NASA, USGS and ESA datasets, every one cited with
-> its licence and DOI in the app.
->
-> We also tested whether the ranking holds up. Perturb the weights, and the
-> order barely moves — Spearman rho nought point nine nine eight. Drop any
-> single feature, still above nought point nine eight. But halve the window to
-> six kilometres and rho falls to nought point nine one. The result is scale
-> dependent, and we say so in the app instead of hiding it.
-
-### Close (2:40–3:00)
-
-> A high score means similar terrain statistics at this scale. It is not a
-> landing site, not a habitability judgement, not a probability. It is a
-> measured, reproducible starting point for the people who choose where to
-> test the hardware that goes to the Moon.
->
-> Terrestrial Analog Finder. Team ghostblood.
+- Present from the deck and record the screen; cut in a live app capture at slide 4 or
+  slide 10 if you want movement.
+- Pre-run the search once so tiles and hillshades are cached.
+- Burn in captions. Judges often watch muted, and several numbers here are spoken.
+- Record each slide's audio separately if that is easier — the timings are per slide,
+  so nothing depends on a continuous take.
 
 ---
 
 ## 4. The 7-slide deck (alternative to the video)
 
-Use this only if you submit slides instead of a video. One idea per slide; the
-notes are what you would say, not what you print.
+Use this only if you submit slides **instead of** a video, in the Project Demo field.
+Seven slides is the hard limit there, so this is a separate, tighter deck from the
+15-slide presentation above: <https://claude.ai/artifact/8VeZLtmmDsUFk4fY83ebZ6>
 
 | # | Slide | Carries |
 |---|---|---|

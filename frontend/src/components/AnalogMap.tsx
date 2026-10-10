@@ -5,23 +5,23 @@ import 'leaflet/dist/leaflet.css';
 import type { Candidate, LocationSummary } from '../lib/types';
 import { fmtCoord, indexColor, isValidCoord, KIND_LABEL } from '../lib/format';
 
-// A muted basemap: the markers carry the data, so the map underneath should
-// recede. Still OpenStreetMap data, rendered in CARTO's dark style to sit on
-// the charcoal page.
+// A muted dark basemap, so the markers carry the data and the map recedes.
+// Esri's Dark Gray Canvas serves without an API key; CARTO's equivalent now
+// returns a watermarked "API KEY REQUIRED" tile, so do not go back to it.
 const TILE_URL =
   (import.meta.env.VITE_TILE_URL as string | undefined) ??
-  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
 
 // Marker chrome for the dark basemap. A near-black hairline separates adjacent
 // markers without competing with the similarity fill.
 const STROKE = '#12120f';
 const STROKE_SELECTED = '#5eead4';
-const GRATICULE = '#3a3933';
+const GRATICULE = '#e8e6df';
 const POOL_FILL = '#55544e';
 const POOL_STROKE = '#7a796f';
 const TILE_ATTR =
   (import.meta.env.VITE_TILE_ATTRIBUTION as string | undefined) ??
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  'Basemap: Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 interface Props {
   pool: LocationSummary[];
@@ -42,7 +42,7 @@ function Graticule() {
   return (
     <>
       {lines.map((l, i) => (
-        <Polyline key={i} positions={l} pathOptions={{ color: GRATICULE, weight: 1, dashArray: '4 4' }} interactive={false} />
+        <Polyline key={i} positions={l} pathOptions={{ color: GRATICULE, weight: 1, opacity: 0.35, dashArray: '5 6' }} interactive={false} />
       ))}
     </>
   );
