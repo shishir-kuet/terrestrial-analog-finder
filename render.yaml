@@ -1,0 +1,14 @@
+# Render Blueprint. Importing this repo at https://dashboard.render.com/blueprints
+# creates the service with these settings instead of filling the form by hand.
+#
+# The app is one container with the processed dataset and every hillshade render
+# baked in: no database, no object store, no secrets to configure.
+services:
+  - type: web
+    name: terrestrial-analog-finder
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    # Render injects PORT; the Dockerfile's CMD binds ${PORT:-8000}.
+    healthCheckPath: /api/health
+    autoDeploy: true

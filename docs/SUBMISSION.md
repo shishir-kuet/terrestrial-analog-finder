@@ -31,8 +31,9 @@ Journey / References*. Section 3 below is written against that shape — adjust 
 
 **No — a public code repository satisfies "link to final project."** But the link must be publicly reachable with no
 login, and judges watch a 30-second demo and then click through. A live URL they can click beats a repo they would have
-to build. The whole app is one Docker container with the data baked in (13 MB), so hosting is cheap and quick.
-See [DEPLOYMENT.md](DEPLOYMENT.md).
+to build. The whole app is one Docker container with the data baked in (13 MB, 58 MB resident), so hosting is free.
+It deploys to a free Render web service; see [DEPLOYMENT.md](DEPLOYMENT.md), which also explains why Hugging Face
+Spaces is no longer an option (Docker Spaces now need a paid plan).
 
 ---
 
@@ -197,7 +198,8 @@ Repository and app:
 - [x] Dataset catalogue, licences and DOIs served live and visible in the app.
 - [x] Sensitivity analysis shipped and shown.
 - [ ] Push the current branch to the public GitHub repo and confirm it is public and clones cleanly.
-- [ ] Deploy a live URL (see [DEPLOYMENT.md](DEPLOYMENT.md)) and confirm it opens with no login.
+- [ ] Deploy a live URL on Render (see [DEPLOYMENT.md](DEPLOYMENT.md)) and confirm it opens with no login.
+- [ ] Set up the uptime pinger so the free service does not sleep during judging.
 - [ ] Add individual member names to the About page and README §16.
 
 Space Apps project page:

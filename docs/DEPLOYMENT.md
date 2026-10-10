@@ -1,128 +1,127 @@
-# Deployment — Hugging Face Spaces
+# Deployment
 
-The whole app is one Docker container: a FastAPI process that serves both the API and the built React frontend, with
-the 13 MB processed dataset and all 526 hillshade renders baked into the image. No database, no object store, no
-secrets. That makes it cheap to host and quick to reproduce.
+The whole app is one Docker container: a FastAPI process serving both the API and the built React frontend, with the
+13 MB processed dataset and all 526 hillshade renders baked into the image. No database, no object store, no secrets.
+Measured at **58 MB resident** with every dataset loaded and a full search run, so it fits the smallest free tier
+anywhere.
 
-Target: a **free Hugging Face Space**, Docker SDK. Free forever, no credit card, a permanent public URL, and no
-cold-start sleep — a judge who clicks the link gets the running app.
+**Target: a free Render web service.**
+
+> **Hugging Face Spaces was the original plan and no longer works for this project.** Hugging Face's own hardware docs
+> now state: *"CPU Basic has no hourly cost, but creating a new Space that runs on compute (Gradio or Docker) requires
+> a paid plan. Static Spaces are free for everyone."* A Docker Space needs PRO at $9/month. Static Spaces are free but
+> cannot run the Python API. Keep this in mind if you see older guides — including an earlier version of this file.
 
 ---
 
 ## What is already set up
 
-- **`README.md` front matter** — the YAML block at the top of the repo README is the Space configuration. Hugging
-  Face reads `sdk: docker` and `app_port: 8000` from it. GitHub renders it as a small metadata table; that is the only
-  cost of keeping one repo for both remotes.
+- **`render.yaml`** — a Render Blueprint, so the service is created from the repo instead of by filling in a form.
 - **`Dockerfile`** — multi-stage: Node builds the frontend, then a slim Python image installs the API dependencies and
-  copies in `data/processed`, `data/sources` and the built `frontend/dist`. It runs as uid 1000 (what Spaces expects)
-  and honours a `PORT` environment variable, defaulting to 8000.
-- **No Git LFS needed** — the largest file in the repo is 1.3 MB and the packed repo is about 9 MB, well under
-  Hugging Face's 10 MB per-file threshold.
+  copies in `data/processed`, `data/sources` and the built `frontend/dist`. It binds `${PORT:-8000}`, which is exactly
+  what Render needs (Render injects `PORT`), and runs as a non-root user.
+- **`/api/health`** — used as the Render health check. It returns `{"status":"ok","locations":570,...}`.
 
-Nothing in the image needs to write to disk at runtime, so the read-only-ish Spaces filesystem is not a problem.
-
----
-
-## One-time setup
-
-1. Create an account at <https://huggingface.co/join> (free).
-
-2. Create the Space: <https://huggingface.co/new-space>
-   - **Owner:** your username (or a `ghostblood` organisation if you create one).
-   - **Space name:** `terrestrial-analog-finder`
-   - **License:** your choice.
-   - **SDK:** **Docker** → **Blank**.
-   - **Hardware:** CPU basic (free).
-   - **Visibility:** **Public** — Space Apps requires a link that works with no login.
-
-3. Create an access token with **write** permission: <https://huggingface.co/settings/tokens>
-   (type "Write"). You will paste it as the password when git asks.
+Nothing writes to disk at runtime, so the lack of a persistent disk on the free plan is not a problem.
 
 ---
 
 ## Deploying
 
-From the repository root. Replace `<USER>` with your Hugging Face username.
+1. Sign up at <https://dashboard.render.com/register> — the free plan does not ask for a card at signup. Sign in with
+   GitHub so Render can see the repository.
 
-```bash
-git remote add space https://huggingface.co/spaces/<USER>/terrestrial-analog-finder
-git push space main --force
-```
+2. Go to <https://dashboard.render.com/blueprints> → **New Blueprint Instance** → pick
+   `shishir-kuet/terrestrial-analog-finder` → **Apply**. Render reads `render.yaml` and creates the service.
 
-`--force` is needed on the **first** push only: creating a Space makes an initial commit with its own README, so our
-history does not fast-forward onto it. There is nothing in that commit worth keeping. Later pushes are plain
-`git push space main`.
+   *If you would rather not use the Blueprint:* **New +** → **Web Service** → connect the repo → set **Language** to
+   **Docker**, **Instance Type** to **Free**, **Health Check Path** to `/api/health`, and leave the rest at defaults.
 
-Git will prompt for credentials: **username** = your Hugging Face username, **password** = the write token from step 3
-(not your account password). On Windows the Git Credential Manager window asks for the same two values and remembers
-them afterwards.
+3. Wait for the first build: roughly **5–10 minutes** (`npm ci`, the Vite build, then the Python dependencies). Watch
+   the **Logs** tab. It is up when the log shows:
 
-The Space then builds the Dockerfile. The first build takes roughly 5–10 minutes — `npm ci` plus the Vite build plus
-the Python dependencies. Watch it under the **Logs** tab on the Space page; the build is finished when the logs show:
+   ```
+   INFO:     Uvicorn running on http://0.0.0.0:10000
+   INFO:     Application startup complete.
+   ```
 
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000
-INFO:     Application startup complete.
-```
+Your public URL is `https://terrestrial-analog-finder.onrender.com` (Render appends a suffix if the name is taken —
+the dashboard shows the real one). **That is the link to put in the submission.**
 
-Your public URL is then `https://huggingface.co/spaces/<USER>/terrestrial-analog-finder`, and the app itself is also
-served directly at `https://<USER>-terrestrial-analog-finder.hf.space`. **Use the second one as the demo link** — it
-is the bare app without the Hugging Face page frame around it.
+### Redeploying
 
-### Redeploying after a change
+`autoDeploy: true` is set, so every push to `main` rebuilds the service. Nothing else to do.
 
-```bash
-git push space main
-```
+---
 
-That is the whole loop. Spaces rebuilds on every push.
+## Keeping it awake (do this before judging)
+
+A free Render service **spins down after 15 minutes with no traffic** and takes about a minute to come back. A judge
+clicking your link and getting a blank minute is the worst possible first impression.
+
+Render's free allowance is **750 instance hours per workspace per month**. A 31-day month is 744 hours — so keeping a
+single service running continuously fits inside the free allowance with hours to spare.
+
+Set up a free pinger:
+
+1. <https://cron-job.org> (free, no card) or <https://uptimerobot.com> (free tier, 5-minute interval).
+2. Add a job hitting `https://<your-service>.onrender.com/api/health` every **10 minutes**.
+3. Confirm it reports HTTP 200.
+
+Turn the pinger on a few days before submission and leave it until judging ends. One service only — a second one would
+push you past 750 hours.
 
 ---
 
 ## Verifying the deployment
 
-Once the build is green, check these by hand — they are the things that break in a new environment:
+Check these by hand once the build is green. They are the things that break in a new environment:
 
 | Check | Expected |
 |---|---|
-| `https://<USER>-terrestrial-analog-finder.hf.space/api/health` | `{"status":"ok","locations":570,...}` |
+| `https://<service>.onrender.com/api/health` | `{"status":"ok","locations":570,...}` |
 | Landing page | Target spotlight rotates through real hillshade renders |
 | Explorer → Moon → Connecting ridge → Find Earth analogs | #1 is the Transantarctic cell at 78.5° S 163.5° E, index 79.1 |
+| Data & methods page | Dataset list populated with 8 datasets — proves the browser can reach the API |
 | Open in a private window | Loads with no login prompt |
-| Data & methods page | Dataset list populated (8 datasets) — proves the API is reachable from the browser |
 
-If the map tiles are blank, that is OpenStreetMap rate-limiting from a shared host, not a deployment fault — the app
-falls back to a graticule and says so. Everything else keeps working.
+If the map tiles are blank, that is OpenStreetMap rate-limiting a shared host, not a deployment fault — the app falls
+back to a graticule and says so. Everything else keeps working.
 
 ---
 
 ## Troubleshooting
 
 **Build fails in the `npm ci` stage.** The lockfile and `package.json` must agree. Run `npm ci` locally first; if it
-fails there it will fail on the Space.
+fails there it will fail on Render.
 
-**Space shows "Configuration error".** The YAML front matter in `README.md` is malformed or missing. It must be the
-very first thing in the file, `---` on line 1, and `sdk: docker` must be present.
+**Build succeeds, service shows "Port scan timeout".** The container is not binding the port Render injected. The
+Dockerfile's `CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]` handles this — check it has
+not been changed to a hard-coded port, and that the host is `0.0.0.0` and not `127.0.0.1`.
 
-**App builds but the Space shows a blank page or a timeout.** The container is not listening on the declared port.
-Confirm `app_port: 8000` in the front matter matches the port uvicorn binds — the Dockerfile's `${PORT:-8000}` resolves
-to 8000 when Spaces does not inject one.
+**Service restarts in a loop.** Check the logs for `DataUnavailable`. That means `data/processed/` did not make it into
+the image — confirm those files are committed and not caught by `.dockerignore`.
 
-**`git push space main` rejected.** Either the token lacks write permission (make a new one of type *Write*), or you
-omitted `--force` on the first push — see above.
+**First request after idle takes a minute.** Expected on the free plan. Set up the pinger above.
 
-**Push is slow.** The repo carries 526 hillshade PNGs and the processed dataset, about 9 MB packed. That is a one-time
-cost; later pushes send only the diff.
+**Build minutes or bandwidth exhausted.** The free allowance is per workspace per calendar month. Without a payment
+method on file, Render suspends free services for the rest of the month when outbound bandwidth runs out. A hackathon
+demo will not come close, but do not point a load test at it.
 
 ---
 
-## Alternatives, if you ever need them
+## Alternatives
 
 The image is a plain Dockerfile with no host-specific code, so it runs anywhere that takes one:
 
-- **Render** — free Docker web service, but it sleeps after 15 minutes idle, so a judge's click hits a ~50 s cold start.
-- **Fly.io** — fast and always-on, but needs card verification even on the free allowance.
-- **Any VPS** — `git clone && docker compose up --build -d` is the whole deployment.
+| Host | Free? | Catch |
+|---|---|---|
+| **Render** | yes, 750 h/month | sleeps after 15 min idle — solved by the pinger above |
+| **Hugging Face Spaces** | **no** for Docker | needs PRO at $9/month; Static Spaces are free but cannot run the API |
+| **Fly.io** | small free allowance | card verification required even on free |
+| **Railway** | no | one-time $5 trial credit, then paid |
+| **Any VPS** | no | `git clone && docker compose up --build -d` is the whole deployment |
 
-Hugging Face was chosen over these because it is free, needs no card, and does not sleep.
+**You do not strictly need any of these.** Space Apps accepts a public code repository as the "link to final project".
+A live URL is better because judges click it, but if hosting becomes a time sink before the deadline, ship the repo
+link and spend the time on the demo instead.

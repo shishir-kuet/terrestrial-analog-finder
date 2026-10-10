@@ -1,17 +1,3 @@
----
-title: Terrestrial Analog Finder
-emoji: 🌔
-colorFrom: indigo
-colorTo: gray
-sdk: docker
-app_port: 8000
-pinned: false
-short_description: Rank Earth locations by measured terrain similarity to the Moon and Mars
----
-
-<!-- The block above configures the Hugging Face Space (see docs/DEPLOYMENT.md).
-     GitHub renders it as a small metadata table; it is not part of the docs. -->
-
 # Terrestrial Analog Finder
 
 Rank places on Earth whose **measured terrain** resembles lunar south-polar sites (the regions discussed for a sustained
@@ -205,9 +191,9 @@ records, so running it changes no terrain value.
 The image is self-contained — the processed dataset and every hillshade render are baked in, and there is no database
 or secret to configure. `docker compose up --build` is the whole local deployment.
 
-For a public URL, the project deploys to a free Hugging Face Space (Docker SDK); the YAML front matter at the top of
-this file is that Space's configuration. Step-by-step instructions, verification checks and alternatives are in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+For a public URL, the project deploys to a free Render web service from `render.yaml`. The image binds `${PORT:-8000}`
+and runs as a non-root user, so it is portable to any Docker host. Step-by-step instructions, verification checks and
+alternatives are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## 12. Testing
 
