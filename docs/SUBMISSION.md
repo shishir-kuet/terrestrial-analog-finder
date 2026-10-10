@@ -184,8 +184,8 @@ is a weight slider changing a ranking. Suggested 30-second cut:
 If you make a deck instead, 7 slides: title · the problem · the method in one diagram · the 570-location dataset ·
 one worked result · what it does *not* claim · links.
 
-The longer 2–3 minute walkthrough in [DEMO_GUIDE.md](DEMO_GUIDE.md) is for live presentation, not for this field —
-it is far over the 30-second limit.
+The 4-minute presentation script in [VIDEO.md](VIDEO.md) is supporting material, not this field — it is far over
+the 30-second limit.
 
 ---
 

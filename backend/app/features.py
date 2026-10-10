@@ -18,7 +18,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-# Feature extraction parameters (documented in docs/METHODOLOGY.md).
+# Feature extraction parameters. The API reports them, with the resulting
+# robust scales, at /api/methodology and /api/features.
 MIN_VALID_FRACTION = 0.95  # window must have >= 95 % valid cells
 RELIEF_LOW_Q = 2.0  # percentile used as robust minimum
 RELIEF_HIGH_Q = 98.0  # percentile used as robust maximum

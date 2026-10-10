@@ -28,7 +28,7 @@ The official challenge page (spaceappschallenge.org) **could not be read from th
 and the site's robots.txt blocked the fetch tool. A secondary news source describes the challenge as finding places on Earth that
 resemble the surface of the Moon or Mars (it names the Atacama Desert, Haughton Crater and Death Valley as examples) and gives
 the event dates as 14–15 November 2026. Official datasets, rules and deliverables are therefore **unverified**. See
-[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md#submission-checklist).
+[docs/SUBMISSION.md](docs/SUBMISSION.md).
 
 ## 3. Implemented features (verified)
 
@@ -43,7 +43,8 @@ the event dates as 14–15 November 2026. Official datasets, rules and deliverab
   nightside thermal inertia per Mars window, and LRO Diviner modelled polar temperatures and ice-stability depth per Moon window.
   One comparable feature comes out of it (thermal-inertia percentile within each body); it carries a default weight of 0, so the
   terrain-only ranking stays exactly reproducible, and everything else is shown per candidate but never scored. Coverage is
-  partial by nature and is reported, never filled in (see [docs/METHODOLOGY.md](docs/METHODOLOGY.md) §9).
+  partial by nature and is reported, never filled in (served live at `/api/environment`, and shown on the app's
+  Data and methodology page).
 - Weighted, robust-scaled distance with explicit missing-data rules, configurable weights and coverage threshold, and a
   per-feature contribution breakdown.
 - Leaflet map with similarity-coloured markers, legend, selection, filters and a basemap-failure fallback (graticule plus notice).
@@ -65,7 +66,8 @@ data/sources/*.json ──► backend/pipeline (offline)         ──► data/
                                                        similarity.py store.py main.py     Methodology · About
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The diagram above is the whole of it: an offline pipeline writes `data/processed/`, the API reads it, the frontend
+reads the API.
 
 ## 5. Technology stack
 
@@ -94,7 +96,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Investigated and **not integrated**: AppEEARS, MODIS `MCD43A3` albedo (HDF4, no driver here), Mars mineral maps (no archived
 global mineral-class product reachable), lunar thermal inertia (no such product in the reachable archives), THEMIS IR mosaics
 (rendered images, not temperatures) and Moon/Mars Trek (visualisation portals, no verified data API). Details, units, CRSs,
-authentication and limitations for all of these are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
+authentication and limitations for all of these are served live at `/api/datasets` and shown, per dataset, on the
+app's Data and methodology page.
 
 ## 7. Scientific methodology (summary)
 
@@ -112,7 +115,8 @@ Features use **height differences only**, so different vertical datums never ent
 | Hypsometric integral | (mean − P2)/(P98 − P2); missing if relief < 5 m |
 | Slope distribution | Wasserstein-1 distance between 1° slope histograms |
 
-Full definitions are in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+Full definitions, the formula, the robust scales and the sensitivity analysis are served live at `/api/methodology`
+and `/api/features`, and rendered on the app's Data and methodology page.
 
 ## 8. Similarity-score interpretation
 
@@ -216,7 +220,7 @@ Passing tests show the software computes what is documented. They do **not** sho
 
 ## 14. Known limitations
 
-These are summarised here. The full list is in [docs/SCIENTIFIC_LIMITATIONS.md](docs/SCIENTIFIC_LIMITATIONS.md).
+These are summarised here. The full list is on the app's Data and methodology page, next to the results it limits.
 
 - The comparison covers terrain geometry only, at a single scale (12 km windows, 30 m grid). The sensitivity analysis shows that
   window size changes the top-10 most (median overlap 4/10).
