@@ -14,13 +14,20 @@ const TILE_URL =
   (import.meta.env.VITE_TILE_URL as string | undefined) ??
   'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
 
-// Marker chrome for the light basemap. A near-black hairline keeps the pale low
-// end of the similarity ramp visible against pale land.
+// Marker chrome for the light basemap.
+//
+// The similarity fill spans a pale-to-deep ramp, and its pale end is only
+// 1.04:1 against the basemap — a fill cannot carry detectability there. So the
+// dark hairline does: every ranked marker is locatable by its outline whatever
+// its value, and the fill is left free to carry the number. Unranked pool
+// markers have no value to show, so they take a dark fill outright (9.5:1
+// against land) with a white halo, instead of the old grey at 2.16:1 that
+// disappeared into the map.
 const STROKE = '#1b1b19';
 const STROKE_SELECTED = '#00564b';
 const GRATICULE = '#8d8b82';
-const POOL_FILL = '#a8a69c';
-const POOL_STROKE = '#6f6e66';
+const POOL_FILL = '#3f3e38';
+const POOL_HALO = '#ffffff';
 const TILE_ATTR =
   (import.meta.env.VITE_TILE_ATTRIBUTION as string | undefined) ??
   'Basemap: Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -92,8 +99,8 @@ export function Legend({ hasResults }: { hasResults: boolean }) {
         <p className="text-ink-muted">Run a search to colour candidates by similarity.</p>
       )}
       <div className="mt-1.5 hidden space-y-0.5 sm:block">
-        <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-ink align-middle" /> named analog site (larger)</p>
-        <p><span className="mr-1 inline-block h-2 w-2 rounded-full bg-ink-faint align-middle" /> survey grid cell</p>
+        <p><span className="mr-1 inline-block h-3 w-3 rounded-full border-2 border-white bg-ink align-middle" /> named analog site (larger)</p>
+        <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border border-white bg-ink align-middle" /> survey grid cell</p>
         <p><span className="mr-1 inline-block h-2 w-2 rounded-full border border-danger align-middle" /> not ranked (missing data)</p>
       </div>
       <p className="mt-1.5 hidden text-[10px] text-ink-faint sm:block">Markers mark the centre of a 12 km × 12 km analysis window.</p>
@@ -133,12 +140,12 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
             <CircleMarker
               key={p.id}
               center={[p.lat, p.lon]}
-              radius={p.kind === 'earth_named' ? 6 : 3.5}
+              radius={p.kind === 'earth_named' ? 6.5 : 4}
               pathOptions={{
-                color: p.kind === 'earth_named' ? STROKE : POOL_STROKE,
-                weight: 1,
+                color: p.status === 'ok' ? POOL_HALO : POOL_FILL,
+                weight: p.kind === 'earth_named' ? 2 : 1.5,
                 fillColor: p.status === 'ok' ? POOL_FILL : 'transparent',
-                fillOpacity: 0.7,
+                fillOpacity: 0.95,
               }}
             >
               <Popup>
@@ -166,7 +173,7 @@ export default function AnalogMap({ pool, results, excluded, selectedId, onSelec
             radius={(r.kind === 'earth_named' ? 8 : 6) + (r.id === selectedId ? 4 : 0)}
             pathOptions={{
               color: r.id === selectedId ? STROKE_SELECTED : STROKE,
-              weight: r.id === selectedId ? 3 : r.kind === 'earth_named' ? 2 : 1,
+              weight: r.id === selectedId ? 3 : r.kind === 'earth_named' ? 2.5 : 1.75,
               fillColor: indexColor(r.similarity_index, 'light'),
               fillOpacity: 0.95,
             }}

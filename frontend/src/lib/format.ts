@@ -70,14 +70,16 @@ export const COORD_STATUS: Record<string, { label: string; tone: string; help: s
  * ordering survives greyscale and colour-vision deficiency.
  */
 const RAMPS: Record<'light' | 'dark', [number, [number, number, number]][]> = {
-  // Pale to deep, for the map plate and charts on paper.
+  // Pale to deep, for the map plate and charts on paper. The pale end starts
+  // a step down from white: against the basemap even this is only 1.2:1, so
+  // the marker's dark outline is what makes a low-scoring point findable.
   light: [
-    [0, [222, 240, 236]],
-    [40, [168, 216, 207]],
-    [60, [108, 190, 176]],
-    [75, [46, 159, 142]],
-    [90, [0, 125, 106]],
-    [100, [0, 84, 72]],
+    [0, [199, 228, 222]],
+    [40, [146, 203, 192]],
+    [60, [93, 178, 164]],
+    [75, [36, 150, 133]],
+    [90, [0, 117, 99]],
+    [100, [0, 74, 63]],
   ],
   // Deep to bright, for rows and meters on charcoal.
   dark: [
