@@ -28,7 +28,7 @@ The official challenge page (spaceappschallenge.org) **could not be read from th
 and the site's robots.txt blocked the fetch tool. A secondary news source describes the challenge as finding places on Earth that
 resemble the surface of the Moon or Mars (it names the Atacama Desert, Haughton Crater and Death Valley as examples) and gives
 the event dates as 14–15 November 2026. Official datasets, rules and deliverables are therefore **unverified**. See
-[docs/SUBMISSION.md](docs/SUBMISSION.md).
+the live dataset and methodology pages in the application before submitting.
 
 ## 3. Implemented features (verified)
 
@@ -196,8 +196,7 @@ The image is self-contained — the processed dataset and every hillshade render
 or secret to configure. `docker compose up --build` is the whole local deployment.
 
 For a public URL, the project deploys to a free Render web service from `render.yaml`. The image binds `${PORT:-8000}`
-and runs as a non-root user, so it is portable to any Docker host. Step-by-step instructions, verification checks and
-alternatives are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+and runs as a non-root user, so it is portable to any Docker host.
 
 ## 12. Testing
 
